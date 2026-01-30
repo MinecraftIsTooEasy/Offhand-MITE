@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "package": "com.mitemod.miteoffhand.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "target": "DEFAULT",
+  "mixins": [
+    "OffhandEntityPlayerMixin",
+    "OffhandEntityPlayerUseMixin"
+  ],
+  "client": [
+    "OffhandGuiIngameMixin",
+    "OffhandItemRendererMixin",
+    "OffhandMinecraftMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
