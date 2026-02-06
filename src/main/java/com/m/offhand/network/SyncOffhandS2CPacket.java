@@ -1,7 +1,7 @@
-package com.mitemod.miteoffhand.network;
+package com.m.offhand.network;
 
-import com.mitemod.miteoffhand.MITEOFFHANDMod;
-import com.mitemod.miteoffhand.api.OffhandAccess;
+import com.m.offhand.OffhandMod;
+import com.m.offhand.api.OffhandAccess;
 import moddedmite.rustedironcore.network.Packet;
 import moddedmite.rustedironcore.network.PacketByteBuf;
 import net.minecraft.EntityPlayer;
@@ -12,7 +12,7 @@ import net.minecraft.ResourceLocation;
  服务端 → 客户端：同步副手物品和使用状态。
  */
 public class SyncOffhandS2CPacket implements Packet {
-    public static final ResourceLocation CHANNEL = new ResourceLocation(MITEOFFHANDMod.OffhandNameSpace, "sync_offhand");
+    public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.NameSpace, "sync_offhand");
 
     private final ItemStack offhand;
     private final boolean isUsingOffhand;

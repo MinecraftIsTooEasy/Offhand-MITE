@@ -1,7 +1,7 @@
-package com.mitemod.miteoffhand.mixin;
+package com.m.offhand.mixin;
 
-import com.mitemod.miteoffhand.api.OffhandAccess;
-import com.mitemod.miteoffhand.network.UseOffhandC2SPacket;
+import com.m.offhand.api.OffhandAccess;
+import com.m.offhand.network.UseOffhandC2SPacket;
 import moddedmite.rustedironcore.network.Network;
 import net.minecraft.*;
 import org.spongepowered.asm.mixin.Mixin;

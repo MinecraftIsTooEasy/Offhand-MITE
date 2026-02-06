@@ -1,7 +1,7 @@
-package com.mitemod.miteoffhand.network;
+package com.m.offhand.network;
 
-import com.mitemod.miteoffhand.MITEOFFHANDMod;
-import com.mitemod.miteoffhand.api.OffhandAccess;
+import com.m.offhand.OffhandMod;
+import com.m.offhand.api.OffhandAccess;
 import moddedmite.rustedironcore.network.Packet;
 import moddedmite.rustedironcore.network.PacketByteBuf;
 import net.minecraft.*;
@@ -11,7 +11,7 @@ import net.minecraft.*;
  * 这个包完全绕过 MITE 的 filter 检查系统
  */
 public class UseOffhandC2SPacket implements Packet {
-    public static final ResourceLocation CHANNEL = new ResourceLocation(MITEOFFHANDMod.OffhandNameSpace, "use_offhand");
+    public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.NameSpace, "use_offhand");
 
     private final boolean ctrlIsDown;
 

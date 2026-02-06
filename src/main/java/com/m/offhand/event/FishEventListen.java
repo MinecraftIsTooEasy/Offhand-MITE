@@ -1,4 +1,4 @@
-package com.mitemod.miteoffhand.event;
+package com.m.offhand.event;
 
 import com.google.common.eventbus.Subscribe;
 import net.xiaoyu233.fml.reload.event.ItemRegistryEvent;

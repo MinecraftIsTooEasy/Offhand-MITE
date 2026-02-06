@@ -1,8 +1,8 @@
-package com.mitemod.miteoffhand.offhand;
+package com.m.offhand.offhand;
 
-import com.mitemod.miteoffhand.api.OffhandAccess;
-import com.mitemod.miteoffhand.network.SwapOffhandC2SPacket;
-import com.mitemod.miteoffhand.network.UseOffhandC2SPacket;
+import com.m.offhand.api.OffhandAccess;
+import com.m.offhand.network.SwapOffhandC2SPacket;
+import com.m.offhand.network.UseOffhandC2SPacket;
 import moddedmite.rustedironcore.api.event.listener.IKeybindingListener;
 import moddedmite.rustedironcore.api.event.listener.ITickListener;
 import moddedmite.rustedironcore.network.Network;

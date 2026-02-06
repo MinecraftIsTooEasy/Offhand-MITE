@@ -1,7 +1,7 @@
-package com.mitemod.miteoffhand.network;
+package com.m.offhand.network;
 
-import com.mitemod.miteoffhand.MITEOFFHANDMod;
-import com.mitemod.miteoffhand.api.OffhandAccess;
+import com.m.offhand.OffhandMod;
+import com.m.offhand.api.OffhandAccess;
 import moddedmite.rustedironcore.network.Packet;
 import moddedmite.rustedironcore.network.PacketByteBuf;
 import net.minecraft.EntityPlayer;
@@ -12,7 +12,7 @@ import net.minecraft.ResourceLocation;
  * Client -> Server: request swapping mainhand and offhand.
  */
 public class SwapOffhandC2SPacket implements Packet {
-    public static final ResourceLocation CHANNEL = new ResourceLocation(MITEOFFHANDMod.OffhandNameSpace, "swap_offhand");
+    public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.NameSpace, "swap_offhand");
 
     public SwapOffhandC2SPacket() {
     }
@@ -50,7 +50,7 @@ public class SwapOffhandC2SPacket implements Packet {
         if (entityPlayer instanceof net.minecraft.ServerPlayer serverPlayer) {
             moddedmite.rustedironcore.network.Network.sendToClient(
                     serverPlayer,
-                    new com.mitemod.miteoffhand.network.SyncOffhandS2CPacket(offhandAccess.miteassistant$getOffhandStack())
+                    new SyncOffhandS2CPacket(offhandAccess.miteassistant$getOffhandStack())
             );
         }
     }

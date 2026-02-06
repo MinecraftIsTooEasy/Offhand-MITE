@@ -1,6 +1,6 @@
-package com.mitemod.miteoffhand.mixin;
+package com.m.offhand.mixin;
 
-import com.mitemod.miteoffhand.api.OffhandAccess;
+import com.m.offhand.api.OffhandAccess;
 import net.minecraft.*;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;

@@ -1,7 +1,7 @@
-package com.mitemod.miteoffhand.offhand;
+package com.m.offhand.offhand;
 
-import com.mitemod.miteoffhand.api.OffhandAccess;
-import com.mitemod.miteoffhand.network.SyncOffhandS2CPacket;
+import com.m.offhand.api.OffhandAccess;
+import com.m.offhand.network.SyncOffhandS2CPacket;
 import moddedmite.rustedironcore.api.event.events.PlayerLoggedInEvent;
 import moddedmite.rustedironcore.api.event.listener.IPlayerEventListener;
 import moddedmite.rustedironcore.network.Network;

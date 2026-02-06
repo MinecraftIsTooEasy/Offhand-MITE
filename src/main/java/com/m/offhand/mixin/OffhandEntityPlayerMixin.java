@@ -1,6 +1,6 @@
-package com.mitemod.miteoffhand.mixin;
+package com.m.offhand.mixin;
 
-import com.mitemod.miteoffhand.api.OffhandAccess;
+import com.m.offhand.api.OffhandAccess;
 import net.minecraft.EntityPlayer;
 import net.minecraft.ItemStack;
 import net.minecraft.NBTTagCompound;

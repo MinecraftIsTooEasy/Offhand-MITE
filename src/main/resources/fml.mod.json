@@ -10,19 +10,19 @@
   },
   "environment": "*",
   "name": "MITE-OFFHAND",
-  "description": "添加高版本(offhand)副手 --- MITE",
+  "description": "添加高版本(offhand)副手 -- MITE",
   "authors": [
     "M"
   ],
   "entrypoints": {
     "main": [
-      "com.mitemod.miteoffhand.MITEOFFHANDMod"
+      "com.m.offhand.OffhandMod"
     ]
   },
   "mixins": [
-    "OffhandNameSpace.mixins.json"
+    "offhand.mixins.json"
   ],
-  "accessWidener": "OffhandNameSpace.accesswidener",
+  "accessWidener": "META-INF/offhand.accesswidener",
   "icon": "icon.png",
   "contact": {
     "homepage": "https://minecraftistooeasy.github.io/",

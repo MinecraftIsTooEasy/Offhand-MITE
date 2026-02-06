@@ -1,4 +1,4 @@
-package com.mitemod.miteoffhand.api;
+package com.m.offhand.api;
 
 import net.minecraft.ItemStack;
 

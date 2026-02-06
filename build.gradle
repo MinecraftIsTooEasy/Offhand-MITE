@@ -24,12 +24,12 @@ repositories {
 }
 
 loom {
-    accessWidenerPath = file("src/main/resources/OffhandNameSpace.accesswidener")
+    accessWidenerPath = file("src/main/resources/META-INF/offhand.accesswidener")
     mergedMinecraftJar()
     //latest fishmodloader https://github.com/MinecraftIsTooEasy/FishModLoader/releases/latest
     setFML(new File("libs\\FishModLoader-v${loader_version}.jar"))
     mods {
-        "OffhandNameSpace" {
+        "offhand" {
             sourceSet sourceSets.main
 //            sourceSet sourceSets.client
 //            sourceSet sourceSets.server
@@ -39,8 +39,9 @@ loom {
 
 }
 
-runClient {
-    args("--username", "${user_name}", "--session", "a.a.a.a", "--width", "${window_width}", "--height", "${window_height}")
+tasks.named('runClient', JavaExec).configure { exec ->
+    def user = project.hasProperty('user_name') ? project.user_name : 'Dev'
+    exec.setArgs(['--user_name', user, '--session', '0', '--width', '854', '--height', '480'])
 }
 
 dependencies {
