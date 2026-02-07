@@ -1,6 +1,19 @@
 # MITE-Offhand Mod
 
-## 1. MITE-Offhand
+## 2.0.0
+
+## 前置依赖支持：
+
+    FishModLoader-v3.4.2.jar
+    RustedIronCore-1.4.0.jar
+    ManyLib-2.0.1.jar
+    ModernMITE-3.7.0.jar
+
+## BUG 说明
+    
+    修复了不知道多少个不知名的BUG...
+
+## 1.0.1
 
     使用说明：
         按F键进行交互

@@ -3,6 +3,8 @@ package com.m.offhand.offhand;
 import com.m.offhand.api.OffhandAccess;
 import com.m.offhand.network.SwapOffhandC2SPacket;
 import com.m.offhand.network.UseOffhandC2SPacket;
+import com.m.offhand.util.OffhandConstants;
+import com.m.offhand.util.OffhandUtils;
 import moddedmite.rustedironcore.api.event.listener.IKeybindingListener;
 import moddedmite.rustedironcore.api.event.listener.ITickListener;
 import moddedmite.rustedironcore.network.Network;
@@ -28,7 +30,6 @@ public class OffhandKeybindListener implements IKeybindingListener, ITickListene
     // 冷却时间（防止狂按导致问题）
     private long lastSwapTime = 0;
     private long lastUseTime = 0;
-    private static final long COOLDOWN_MS = 200; // 200毫秒冷却
 
     private OffhandKeybindListener() {
     }
@@ -69,17 +70,15 @@ public class OffhandKeybindListener implements IKeybindingListener, ITickListene
         if (player == null) return;
         if (client.currentScreen != null) return; // 在 GUI 中时不交换
 
-        if (!(player instanceof OffhandAccess offhandAccess)) return;
+        OffhandAccess offhandAccess = OffhandUtils.asOffhandAccess(player);
+        if (offhandAccess == null) return;
         
         // 如果正在使用副手物品，不允许交换（防止物品丢失）
-        if (offhandAccess.miteassistant$isUsingOffhand()) return;
-        
-        // 如果玩家正在使用任何物品，不允许交换
-        if (player.isUsingItem()) return;
+        if (OffhandUtils.isPlayerBusy(player, offhandAccess)) return;
         
         // 冷却检查（防止狂按导致问题）
         long now = System.currentTimeMillis();
-        if (now - lastSwapTime < COOLDOWN_MS) return;
+        if (now - lastSwapTime < OffhandConstants.COOLDOWN_MS) return;
         lastSwapTime = now;
 
         // 直接发送请求到服务器，不做客户端预测（防止状态不同步）
@@ -106,13 +105,11 @@ public class OffhandKeybindListener implements IKeybindingListener, ITickListene
         }
         this.lastUseKeyState = true;
         
-        if (!(player instanceof OffhandAccess offhandAccess)) return;
+        OffhandAccess offhandAccess = OffhandUtils.asOffhandAccess(player);
+        if (offhandAccess == null) return;
         
         // 如果正在使用副手物品，不处理
-        if (offhandAccess.miteassistant$isUsingOffhand()) return;
-        
-        // 如果玩家正在使用任何物品，不处理
-        if (player.isUsingItem()) return;
+        if (OffhandUtils.isPlayerBusy(player, offhandAccess)) return;
         
         // 检查主手是否为空（只有主手为空时才由这里处理）
         // 主手有工具且副手有方块的情况由 OffhandMinecraftMixin 处理
@@ -121,11 +118,11 @@ public class OffhandKeybindListener implements IKeybindingListener, ITickListene
         
         // 检查副手是否有物品
         ItemStack offhand = offhandAccess.miteassistant$getOffhandStack();
-        if (offhand == null || offhand.stackSize <= 0) return;
+        if (!OffhandUtils.isValidOffhand(offhand)) return;
         
         // 冷却检查（防止狂按导致问题）
         long now = System.currentTimeMillis();
-        if (now - lastUseTime < COOLDOWN_MS) return;
+        if (now - lastUseTime < OffhandConstants.COOLDOWN_MS) return;
         lastUseTime = now;
         
         // 发送副手使用请求到服务器

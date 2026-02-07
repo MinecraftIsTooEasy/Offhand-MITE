@@ -6,7 +6,9 @@
     "fishmodloader": ">=3.4.0",
     "minecraft": "1.6.4-mite",
     "java": ">=17",
-    "rusted_iron_core": ">=1.3.5"
+    "rusted_iron_core": ">=1.3.5",
+    "many-lib": ">=2.2.3",
+    "modern-mite": ">=3.0.0"
   },
   "environment": "*",
   "name": "MITE-OFFHAND",
@@ -22,7 +24,7 @@
   "mixins": [
     "offhand.mixins.json"
   ],
-  "accessWidener": "META-INF/offhand.accesswidener",
+  "accessWidener": "offhand.accesswidener",
   "icon": "icon.png",
   "contact": {
     "homepage": "https://minecraftistooeasy.github.io/",

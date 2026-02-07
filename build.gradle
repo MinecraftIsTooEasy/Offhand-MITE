@@ -24,7 +24,7 @@ repositories {
 }
 
 loom {
-    accessWidenerPath = file("src/main/resources/META-INF/offhand.accesswidener")
+    accessWidenerPath = file("src/main/resources/offhand.accesswidener")
     mergedMinecraftJar()
     //latest fishmodloader https://github.com/MinecraftIsTooEasy/FishModLoader/releases/latest
     setFML(new File("libs\\FishModLoader-v${loader_version}.jar"))
@@ -54,8 +54,10 @@ dependencies {
 
     // Rusted_Iron_Core API. This is technically optional, but you probably want it anyway.
     implementation files("libs\\RustedIronCore-${rusted_iron_core_version}.jar")
-    // ManyLib API. This is fast develop GUI.
-    implementation files("libs\\ManyLib-2.0.1.jar")
+    // ManyLib API. Rapid development of GUI
+    implementation files("libs\\ManyLib-${many_lib}.jar")
+    // ModernMITE API. Add modern version functions
+    implementation files("libs\\ModernMITE-${modern_mite}.jar")
 }
 
 processResources {

@@ -2,6 +2,8 @@ package com.m.offhand.network;
 
 import com.m.offhand.OffhandMod;
 import com.m.offhand.api.OffhandAccess;
+import com.m.offhand.util.OffhandNetworkHelper;
+import com.m.offhand.util.OffhandUtils;
 import moddedmite.rustedironcore.network.Packet;
 import moddedmite.rustedironcore.network.PacketByteBuf;
 import net.minecraft.EntityPlayer;
@@ -26,17 +28,11 @@ public class SwapOffhandC2SPacket implements Packet {
 
     @Override
     public void apply(EntityPlayer entityPlayer) {
-        if (!(entityPlayer instanceof OffhandAccess offhandAccess)) return;
+        OffhandAccess offhandAccess = OffhandUtils.asOffhandAccess(entityPlayer);
+        if (offhandAccess == null) return;
 
         // 如果正在使用副手物品，不允许交换（防止物品丢失）
-        if (offhandAccess.miteassistant$isUsingOffhand()) {
-            return;
-        }
-        
-        // 如果玩家正在使用任何物品，也不允许交换
-        if (entityPlayer.isUsingItem()) {
-            return;
-        }
+        if (OffhandUtils.isPlayerBusy(entityPlayer, offhandAccess)) return;
 
         int currentSlot = entityPlayer.inventory.currentItem;
         ItemStack main = entityPlayer.inventory.getStackInSlot(currentSlot); // 使用 getStackInSlot 更安全
@@ -48,10 +44,7 @@ public class SwapOffhandC2SPacket implements Packet {
 
         // Server -> Client: 立即同步副手，避免快速切换/滚轮导致客户端显示不同步
         if (entityPlayer instanceof net.minecraft.ServerPlayer serverPlayer) {
-            moddedmite.rustedironcore.network.Network.sendToClient(
-                    serverPlayer,
-                    new SyncOffhandS2CPacket(offhandAccess.miteassistant$getOffhandStack())
-            );
+            OffhandNetworkHelper.syncOffhandToClient(serverPlayer, offhandAccess.miteassistant$getOffhandStack());
         }
     }
 

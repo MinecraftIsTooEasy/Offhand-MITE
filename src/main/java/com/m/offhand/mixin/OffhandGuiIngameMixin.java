@@ -28,11 +28,17 @@ public abstract class OffhandGuiIngameMixin extends Gui {
     @Unique
     private static RenderItem itemRender = new RenderItem();
 
+    // 用于在渲染热键栏槽位时临时替换物品
+    @Unique
+    private ItemStack miteassistant$tempSwappedItem = null;
+    @Unique
+    private int miteassistant$tempSwappedSlot = -1;
+
     /**
-     * 在渲染热键栏槽位前，如果正在使用副手物品且是当前槽位，临时清空物品
-     * 这样热键栏不会显示副手物品在主手位置
+     * 在渲染热键栏槽位前，如果正在使用副手物品且是当前槽位，
+     * 临时将槽位物品替换为原始主手物品，这样热键栏显示正确的主手物品（如剑）
      */
-    @Inject(method = "renderInventorySlot", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderInventorySlot", at = @At("HEAD"))
     private void miteassistant$beforeRenderSlot(int slotIndex, int x, int y, float partialTicks, CallbackInfo ci) {
         if (this.mc == null || this.mc.thePlayer == null) return;
         
@@ -41,8 +47,22 @@ public abstract class OffhandGuiIngameMixin extends Gui {
 
         // 如果正在使用副手物品，且这个槽位是当前选中的主手槽位
         if (offhandAccess.miteassistant$isUsingOffhand() && slotIndex == this.mc.thePlayer.inventory.currentItem) {
-            // 跳过渲染这个槽位的物品（因为物品实际上是副手物品，不应该显示在主手位置）
-            ci.cancel();
+            // 临时保存当前槽位物品（副手物品被服务端放到了这里），替换为原始主手物品
+            miteassistant$tempSwappedSlot = slotIndex;
+            miteassistant$tempSwappedItem = this.mc.thePlayer.inventory.mainInventory[slotIndex];
+            this.mc.thePlayer.inventory.mainInventory[slotIndex] = offhandAccess.miteassistant$getOriginalMainhand();
+        }
+    }
+
+    /**
+     * 在渲染热键栏槽位后，恢复被临时替换的物品
+     */
+    @Inject(method = "renderInventorySlot", at = @At("TAIL"))
+    private void miteassistant$afterRenderSlot(int slotIndex, int x, int y, float partialTicks, CallbackInfo ci) {
+        if (miteassistant$tempSwappedSlot >= 0 && miteassistant$tempSwappedSlot == slotIndex) {
+            this.mc.thePlayer.inventory.mainInventory[miteassistant$tempSwappedSlot] = miteassistant$tempSwappedItem;
+            miteassistant$tempSwappedItem = null;
+            miteassistant$tempSwappedSlot = -1;
         }
     }
 

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * 第一人称左手显示副手物品。
- * 当使用副手物品时，在左手位置渲染（带使用动画），主手显示空手。
+ * 当使用副手物品时，在左手位置渲染（带使用动画），主手显示原始主手物品。
  */
 @Mixin(ItemRenderer.class)
 public abstract class OffhandItemRendererMixin {
@@ -31,17 +31,28 @@ public abstract class OffhandItemRendererMixin {
     @Shadow
     protected abstract void renderItem(EntityLivingBase entityLivingBase, ItemStack itemStack, int renderPass);
 
-    // 临时保存使用副手时的物品，用于渲染
+    // 临时保存使用副手时的物品，用于左手渲染
     @Unique
     private ItemStack miteassistant$savedOffhandItem = null;
 
+    // 临时保存原始渲染状态，用于恢复
+    @Unique
+    private ItemStack miteassistant$savedItemToRender = null;
+    @Unique
+    private float miteassistant$savedEquippedProgress = -1;
+    @Unique
+    private float miteassistant$savedPrevEquippedProgress = -1;
+
     /**
-     * 在渲染开始前，如果正在使用副手物品，临时清空 itemToRender
-     * 这样原版渲染会显示空手
+     * 在渲染开始前，如果正在使用副手物品，将 itemToRender 替换为原始主手物品
+     * 这样原版渲染会显示原始主手物品（如剑），而不是空手或副手物品
      */
     @Inject(method = "renderItemInFirstPerson(F)V", at = @At("HEAD"))
     private void miteassistant$beforeRender(float partialTicks, CallbackInfo ci) {
         miteassistant$savedOffhandItem = null;
+        miteassistant$savedItemToRender = null;
+        miteassistant$savedEquippedProgress = -1;
+        miteassistant$savedPrevEquippedProgress = -1;
         
         if (this.mc == null || this.mc.thePlayer == null) return;
         
@@ -50,15 +61,23 @@ public abstract class OffhandItemRendererMixin {
 
         // 如果正在使用副手物品
         if (offhandAccess.miteassistant$isUsingOffhand()) {
-            // 直接从主手槽位获取物品（使用副手时物品临时在主手）
+            // 保存副手物品（从主手槽位获取，因为服务端已将副手物品临时放到主手）
             miteassistant$savedOffhandItem = this.mc.thePlayer.inventory.getCurrentItemStack();
-            // 清空 itemToRender，让原版渲染显示空手
-            this.itemToRender = null;
+            
+            // 保存原始渲染状态
+            miteassistant$savedItemToRender = this.itemToRender;
+            miteassistant$savedEquippedProgress = this.equippedProgress;
+            miteassistant$savedPrevEquippedProgress = this.prevEquippedProgress;
+            
+            // 将右手渲染替换为原始主手物品（如剑），强制装备进度为1避免抖动
+            this.itemToRender = offhandAccess.miteassistant$getOriginalMainhand();
+            this.equippedProgress = 1.0F;
+            this.prevEquippedProgress = 1.0F;
         }
     }
 
     /**
-     * 在正常渲染结束后，渲染副手物品在左手位置
+     * 在正常渲染结束后，恢复渲染状态并渲染副手物品在左手位置
      */
     @Inject(method = "renderItemInFirstPerson(F)V", at = @At("TAIL"))
     private void miteassistant$renderOffhandFirstPerson(float partialTicks, CallbackInfo ci) {
@@ -77,9 +96,17 @@ public abstract class OffhandItemRendererMixin {
             if (itemToRenderInOffhand == null) {
                 itemToRenderInOffhand = player.inventory.getCurrentItemStack();
             }
-            // 恢复 itemToRender
-            this.itemToRender = itemToRenderInOffhand;
             miteassistant$savedOffhandItem = null;
+            
+            // 恢复原始渲染状态，防止 updateEquippedItem 检测到异常变化
+            if (miteassistant$savedItemToRender != null || miteassistant$savedEquippedProgress >= 0) {
+                this.itemToRender = miteassistant$savedItemToRender;
+                this.equippedProgress = miteassistant$savedEquippedProgress;
+                this.prevEquippedProgress = miteassistant$savedPrevEquippedProgress;
+                miteassistant$savedItemToRender = null;
+                miteassistant$savedEquippedProgress = -1;
+                miteassistant$savedPrevEquippedProgress = -1;
+            }
         } else {
             // 不在使用，从副手槽位获取
             itemToRenderInOffhand = offhandAccess.miteassistant$getOffhandStack();
@@ -191,14 +218,18 @@ public abstract class OffhandItemRendererMixin {
 
         // 获取使用动作类型
         EnumItemInUseAction useAction = itemInUse.getItemInUseAction(player);
-        int itemInUseCount = player.getItemInUseCount();
 
-        if (itemInUseCount > 0) {
+        // 客户端没有真实的 itemInUseCount（hook 返回 0 以防止右手动画）
+        // 用 ticksExisted 驱动左手动画，产生平滑的重复进食/喝药水效果
+        int maxDuration = itemInUse.getMaxItemUseDuration();
+        int fakeCount = maxDuration > 0 ? (maxDuration - (player.ticksExisted % maxDuration)) : 1;
+
+        {
             // 正在使用物品
             if (useAction == EnumItemInUseAction.EAT || useAction == EnumItemInUseAction.DRINK) {
-                // 进食/喝水动画
-                float f2 = itemInUseCount - partialTicks + 1.0F;
-                float f1 = 1.0F - f2 / itemInUse.getMaxItemUseDuration();
+                // 进食/喝水动画（tick 驱动）
+                float f2 = fakeCount - partialTicks + 1.0F;
+                float f1 = 1.0F - f2 / (float) maxDuration;
                 float f3 = 1.0F - f1;
                 f3 = f3 * f3 * f3;
                 f3 = f3 * f3 * f3;
@@ -216,7 +247,7 @@ public abstract class OffhandItemRendererMixin {
                 GL11.glRotatef(-8.0F, 1.0F, 0.0F, 0.0F);
                 GL11.glTranslatef(-0.4F, 0.2F, 0.0F);
                 
-                float ticksUsed = itemInUse.getMaxItemUseDuration() - itemInUseCount - partialTicks + 1.0F;
+                float ticksUsed = itemInUse.getMaxItemUseDuration() - fakeCount - partialTicks + 1.0F;
                 float pullProgress = ticksUsed / ItemBow.getTicksForMaxPull(itemInUse);
                 pullProgress = (pullProgress * pullProgress + pullProgress * 2.0F) / 3.0F;
                 if (pullProgress > 1.0F) pullProgress = 1.0F;

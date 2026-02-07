@@ -1,7 +1,9 @@
 package com.m.offhand.mixin;
 
 import com.m.offhand.api.OffhandAccess;
-import com.m.offhand.network.SyncOffhandS2CPacket;
+import com.m.offhand.util.OffhandLog;
+import com.m.offhand.util.OffhandNetworkHelper;
+import com.m.offhand.util.OffhandUtils;
 import net.minecraft.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,15 +27,13 @@ public abstract class OffhandEntityPlayerUseMixin {
     @Inject(method = "onItemUseFinish", at = @At("TAIL"))
     protected void miteassistant$afterItemUseFinish(CallbackInfo ci) {
         Object thisPlayer = this;
-        if (!(thisPlayer instanceof OffhandAccess offhandAccess)) {
-            return;
-        }
+        if (!(thisPlayer instanceof EntityPlayer player)) return;
+        OffhandAccess offhandAccess = OffhandUtils.asOffhandAccess(player);
+        if (offhandAccess == null) return;
         
-        EntityPlayer player = (EntityPlayer) thisPlayer;
-        
-        // 检查是否是副手物品使用完成
-        if (offhandAccess.miteassistant$isUsingOffhand()) {
-            System.out.println("[OFFHAND] 副手物品使用完成");
+        // 检查是否是副手物品使用完成（仅服务端处理，客户端等待服务端同步）
+        if (!player.worldObj.isRemote && offhandAccess.miteassistant$isUsingOffhand()) {
+            OffhandLog.info("[OFFHAND] 副手物品使用完成");
             restoreAfterOffhandUse(player, offhandAccess);
         }
     }
@@ -44,15 +44,13 @@ public abstract class OffhandEntityPlayerUseMixin {
     @Inject(method = "stopUsingItem(Z)V", at = @At("TAIL"))
     protected void miteassistant$afterStopUsingItem(boolean inform_server, CallbackInfo ci) {
         Object thisPlayer = this;
-        if (!(thisPlayer instanceof OffhandAccess offhandAccess)) {
-            return;
-        }
+        if (!(thisPlayer instanceof EntityPlayer player)) return;
+        OffhandAccess offhandAccess = OffhandUtils.asOffhandAccess(player);
+        if (offhandAccess == null) return;
         
-        EntityPlayer player = (EntityPlayer) thisPlayer;
-        
-        // 检查是否是副手物品停止使用
-        if (offhandAccess.miteassistant$isUsingOffhand()) {
-            System.out.println("[OFFHAND] 副手物品停止使用（中途停止）");
+        // 检查是否是副手物品停止使用（仅服务端处理，客户端等待服务端同步）
+        if (!player.worldObj.isRemote && offhandAccess.miteassistant$isUsingOffhand()) {
+            OffhandLog.info("[OFFHAND] 副手物品停止使用（中途停止）");
             restoreAfterOffhandUse(player, offhandAccess);
         }
     }
@@ -86,12 +84,9 @@ public abstract class OffhandEntityPlayerUseMixin {
         
         // 如果在服务器端，同步到客户端
         if (!player.worldObj.isRemote && player instanceof ServerPlayer serverPlayer) {
-            moddedmite.rustedironcore.network.Network.sendToClient(
-                serverPlayer,
-                new SyncOffhandS2CPacket(newOffhand)
-            );
+            OffhandNetworkHelper.syncOffhandToClient(serverPlayer, newOffhand);
         }
         
-        System.out.println("[OFFHAND] 恢复完成，副手物品: " + newOffhand);
+        OffhandLog.info("[OFFHAND] 恢复完成，副手物品: {}", newOffhand);
     }
 }
