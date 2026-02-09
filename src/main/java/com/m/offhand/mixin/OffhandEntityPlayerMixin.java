@@ -134,35 +134,35 @@ public abstract class OffhandEntityPlayerMixin implements OffhandAccess {
         }
     }
 
-//    /**
-//     * 客户端副手进食/喝药水音效。
-//     * 原版 EntityPlayer.playSound 使用 playSoundToNearExcept（排除自己），
-//     * 正常情况下客户端 onUpdate 中 updateItemUse 会为本地玩家播放音效，
-//     * 但副手使用时客户端 itemInUse 为 null，音效不会播放。
-//     * 这里在客户端 onUpdate 末尾手动播放，每4tick一次（与原版节奏一致）。
-//     */
-//    @Inject(method = "onUpdate", at = @At("TAIL"))
-//    private void miteassistant$playOffhandUseSound(CallbackInfo ci) {
-//        EntityPlayer self = (EntityPlayer) (Object) this;
-//        if (!self.worldObj.isRemote) return; // 仅客户端
-//        if (!this.miteassistant$usingOffhand) return;
-//
-//        ItemStack held = this.inventory.getCurrentItemStack();
-//        if (held == null) return;
-//
-//        // 每4tick播放一次音效（与原版 updateItemUse 的调用频率一致）
-//        if (self.ticksExisted % 4 == 0) {
-//            EnumItemInUseAction action = held.getItemInUseAction(self);
-//            if (action == EnumItemInUseAction.DRINK) {
-//                self.worldObj.playSound(self.posX, self.posY, self.posZ,
-//                        "random.drink", 0.5F, self.worldObj.rand.nextFloat() * 0.1F + 0.9F);
-//            } else if (action == EnumItemInUseAction.EAT) {
-//                self.worldObj.playSound(self.posX, self.posY, self.posZ,
-//                        "random.eat", 0.5F + 0.5F * self.rand.nextInt(2),
-//                        (self.rand.nextFloat() - self.rand.nextFloat()) * 0.2F + 1.0F);
-//            }
-//        }
-//    }
+    /**
+     * 客户端副手进食/喝药水音效。
+     * 原版 EntityPlayer.playSound 使用 playSoundToNearExcept（排除自己），
+     * 正常情况下客户端 onUpdate 中 updateItemUse 会为本地玩家播放音效，
+     * 但副手使用时客户端 itemInUse 为 null，音效不会播放。
+     * 这里在客户端 onUpdate 末尾手动播放，每4tick一次（与原版节奏一致）。
+     */
+    @Inject(method = "onUpdate", at = @At("TAIL"))
+    private void miteassistant$playOffhandUseSound(CallbackInfo ci) {
+        EntityPlayer self = (EntityPlayer) (Object) this;
+        if (!self.worldObj.isRemote) return; // 仅客户端
+        if (!this.miteassistant$usingOffhand) return;
+
+        ItemStack held = this.inventory.getCurrentItemStack();
+        if (held == null) return;
+
+        // 每4tick播放一次音效（与原版 updateItemUse 的调用频率一致）
+        if (self.ticksExisted % 4 == 0) {
+            EnumItemInUseAction action = held.getItemInUseAction(self);
+            if (action == EnumItemInUseAction.DRINK) {
+                self.worldObj.playSound(self.posX, self.posY, self.posZ,
+                        "random.drink", 0.5F, self.worldObj.rand.nextFloat() * 0.1F + 0.9F, false);
+            } else if (action == EnumItemInUseAction.EAT) {
+                self.worldObj.playSound(self.posX, self.posY, self.posZ,
+                        "random.eat", 0.5F + 0.5F * self.worldObj.rand.nextInt(2),
+                        (self.worldObj.rand.nextFloat() - self.worldObj.rand.nextFloat()) * 0.2F + 1.0F, false);
+            }
+        }
+    }
 
     @Inject(method = "writeEntityToNBT", at = @At("RETURN"))
     private void miteassistant$writeOffhand(NBTTagCompound tag, CallbackInfo ci) {

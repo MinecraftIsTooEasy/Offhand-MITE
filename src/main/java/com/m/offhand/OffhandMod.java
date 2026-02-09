@@ -1,21 +1,36 @@
 package com.m.offhand;
 
+import com.m.offhand.config.OffhandConfig;
 import com.m.offhand.event.FishEventListen;
 import com.m.offhand.network.SwapOffhandC2SPacket;
 import com.m.offhand.network.SyncOffhandS2CPacket;
 import com.m.offhand.network.UseOffhandC2SPacket;
 import com.m.offhand.offhand.OffhandKeybindListener;
 import com.m.offhand.offhand.OffhandPlayerEventListener;
+import com.m.offhand.util.OffhandLog;
 import net.fabricmc.api.ModInitializer;
 import net.xiaoyu233.fml.ModResourceManager;
+import net.xiaoyu233.fml.config.ConfigRegistry;
 import net.xiaoyu233.fml.reload.event.MITEEvents;
+
+import java.util.Optional;
 
 @SuppressWarnings("unused")
 public class OffhandMod implements ModInitializer {
-//    public static final String MOD_ID = "mite_offhand";
+    public static final String MOD_NAME = "mite_offhand";
     public static final String NameSpace = "offhand";
 
+    @Override
+    public Optional<ConfigRegistry> createConfig() {
+        return Optional.of(new ConfigRegistry(OffhandConfig.ROOT, OffhandConfig.CONFIG_FILE));
+    }
+
+    @Override
     public void onInitialize() {
+        OffhandLog.info("[OFFHAND] Initializing Offhand Mod");
+        
+        OffhandConfig.init();
+        
         MITEEvents.MITE_EVENT_BUS.register(new FishEventListen());
         ModResourceManager.addResourcePackDomain(NameSpace);
 
@@ -41,5 +56,7 @@ public class OffhandMod implements ModInitializer {
             moddedmite.rustedironcore.api.event.Handlers.Keybinding.register(OffhandKeybindListener.INSTANCE);
             moddedmite.rustedironcore.api.event.Handlers.Tick.register(OffhandKeybindListener.INSTANCE);
         }
+        
+        OffhandLog.info("[OFFHAND] Offhand Mod initialized successfully");
     }
 }

@@ -2,10 +2,12 @@ package com.m.offhand.network;
 
 import com.m.offhand.OffhandMod;
 import com.m.offhand.api.OffhandAccess;
+import com.m.offhand.config.OffhandConfig;
 import com.m.offhand.util.OffhandConstants;
 import com.m.offhand.util.OffhandLog;
 import com.m.offhand.util.OffhandNetworkHelper;
 import com.m.offhand.util.OffhandUtils;
+import com.m.offhand.util.OffhandValidator;
 import moddedmite.rustedironcore.network.Packet;
 import moddedmite.rustedironcore.network.PacketByteBuf;
 import net.minecraft.*;
@@ -37,21 +39,60 @@ public class UseOffhandC2SPacket implements Packet {
         // 只在服务器端执行
         if (entityPlayer.worldObj.isRemote) return;
         
+        // 检查配置是否启用
+        if (!OffhandConfig.enableOffhand.get()) {
+            OffhandLog.debug("[OFFHAND] Use failed: offhand is disabled in config");
+            return;
+        }
+        
         // 获取副手物品
         OffhandAccess offhandAccess = OffhandUtils.asOffhandAccess(entityPlayer);
-        if (offhandAccess == null) return;
+        if (offhandAccess == null) {
+            OffhandLog.warn("[OFFHAND] Use failed: player does not implement OffhandAccess");
+            return;
+        }
         
         // 如果已经正在使用副手物品，不重复处理（防止狂按导致物品丢失）
-        if (OffhandUtils.isPlayerBusy(entityPlayer, offhandAccess)) return;
+        if (OffhandUtils.isPlayerBusy(entityPlayer, offhandAccess)) {
+            OffhandLog.debug("[OFFHAND] Use failed: player is busy");
+            return;
+        }
         
         ItemStack offhand = offhandAccess.miteassistant$getOffhandStack();
-        if (!OffhandUtils.isValidOffhand(offhand)) return;
+        if (!OffhandUtils.isValidOffhand(offhand)) {
+            OffhandLog.debug("[OFFHAND] Use failed: offhand is empty or invalid");
+            return;
+        }
+        
+        // 严格验证模式下的状态检查
+        if (OffhandConfig.isStrictValidationEnabled()) {
+            if (!OffhandValidator.validateUse(entityPlayer, offhandAccess)) {
+                OffhandLog.warn("[OFFHAND] Use failed: validation failed");
+                
+                // 尝试恢复状态
+                if (OffhandConfig.isAutoRecoveryEnabled()) {
+                    OffhandValidator.recoverState(entityPlayer, offhandAccess);
+                }
+                return;
+            }
+        }
         
         Item offhandItem = offhand.getItem();
-        if (offhandItem == null) return;
+        if (offhandItem == null) {
+            OffhandLog.warn("[OFFHAND] Use failed: offhand item has no item object");
+            return;
+        }
+        
+        // 检查物品是否被禁用
+        String itemId = getItemId(offhand);
+        if (OffhandConfig.isItemDisabled(itemId)) {
+            OffhandLog.debug("[OFFHAND] Use failed: item {} is disabled", itemId);
+            return;
+        }
         
         // 禁止副手使用钓鱼竿（会导致错误）
         if (offhandItem instanceof ItemFishingRod) {
+            OffhandLog.debug("[OFFHAND] Use failed: fishing rod not allowed in offhand");
             return;
         }
         
@@ -59,6 +100,7 @@ public class UseOffhandC2SPacket implements Packet {
         // 检查物品是否会触发格挡动作（如剑、铲子等）
         EnumItemInUseAction preCheckAction = offhand.getItemInUseAction(entityPlayer);
         if (preCheckAction == EnumItemInUseAction.BLOCK) {
+            OffhandLog.debug("[OFFHAND] Use failed: blocking items not allowed in offhand");
             return;
         }
         
@@ -73,21 +115,25 @@ public class UseOffhandC2SPacket implements Packet {
         if (mainhand == null) {
             // 主手为空，使用副手物品
             shouldUseOffhand = true;
-        } else if (offhandItem instanceof ItemBow) {
-            // 副手弓箭优先于主手
+        } else if (offhandItem instanceof ItemBow && OffhandConfig.enableBowOffhand.get()) {
+            // 副手弓箭优先于主手（如果启用）
             shouldUseOffhand = true;
-        } else if (preCheckAction == EnumItemInUseAction.EAT || preCheckAction == EnumItemInUseAction.DRINK) {
-            // 副手食物/饮品优先于主手，但主手弓箭优先于副手食物
+        } else if ((preCheckAction == EnumItemInUseAction.EAT || preCheckAction == EnumItemInUseAction.DRINK) 
+                   && OffhandConfig.enableFoodOffhand.get()) {
+            // 副手食物/饮品优先于主手，但主手弓箭优先于副手食物（如果启用）
             if (!(mainhand.getItem() instanceof ItemBow)) {
                 shouldUseOffhand = true;
             }
-        } else if (isOffhandBlock && !isMainhandBlock) {
-            // 主手有物品但不是方块，副手是方块 -> 使用副手放置方块
+        } else if (isOffhandBlock && !isMainhandBlock && OffhandConfig.enableBlockOffhand.get()) {
+            // 主手有物品但不是方块，副手是方块 -> 使用副手放置方块（如果启用）
             // 这允许：主手拿铲子，副手拿沙砾，右键放置沙砾
             shouldUseOffhand = true;
         }
         
-        if (!shouldUseOffhand) return;
+        if (!shouldUseOffhand) {
+            OffhandLog.debug("[OFFHAND] Use skipped: conditions not met");
+            return;
+        }
 
         // 检查副手物品是否可以摄食
         EnumItemInUseAction itemInUseAction = offhand.getItemInUseAction(entityPlayer);
@@ -123,6 +169,8 @@ public class UseOffhandC2SPacket implements Packet {
             // MITE 的 convertOneItem 使用 this.currentItem，可能把物品放到了错误的槽位
             // 需要修复：把错误槽位的物品移回正确位置
             
+            OffhandLog.warn("[OFFHAND] Player scrolled from slot {} to {} during onItemRightClick", currentSlot, newCurrentSlot);
+            
             ItemStack wrongSlotItem = entityPlayer.inventory.mainInventory[newCurrentSlot];
             
             // 恢复新槽位为原来的物品
@@ -133,6 +181,15 @@ public class UseOffhandC2SPacket implements Packet {
                 // 新物品被放到了错误的槽位，把它作为使用后的副手物品
                 entityPlayer.inventory.mainInventory[currentSlot] = wrongSlotItem;
             }
+            
+            // 更新原始槽位为新槽位，但保留原来的 originalMainhand
+            // 因为新槽位可能是空的，我们需要保存的是使用副手前的原始主手物品
+            currentSlot = newCurrentSlot;
+            // 注意：不更新 originalMainhand，保持原来的值
+            
+            OffhandLog.info("[OFFHAND] Updated original slot to {} (keeping original mainhand: {})", 
+                currentSlot, originalMainhand != null ? 
+                originalMainhand.getItem().getItemDisplayName(originalMainhand) : "null");
             
             // 同步被影响的槽位到客户端
             if (entityPlayer instanceof ServerPlayer serverPlayer) {
@@ -155,7 +212,7 @@ public class UseOffhandC2SPacket implements Packet {
                 
                 // 同步副手状态到客户端（副手为空，正在使用副手物品，附带原始主手用于渲染）
                 if (entityPlayer instanceof ServerPlayer serverPlayer) {
-                    OffhandNetworkHelper.syncOffhandToClient(serverPlayer, null, true, originalMainhand);
+                    syncWithRetry(serverPlayer, null, true, originalMainhand);
                 }
                 return;
             }
@@ -173,7 +230,7 @@ public class UseOffhandC2SPacket implements Packet {
             // 同步到客户端
             if (entityPlayer instanceof ServerPlayer serverPlayer) {
                 OffhandNetworkHelper.syncInventorySlot(serverPlayer, currentSlot, originalMainhand);
-                OffhandNetworkHelper.syncOffhandToClient(serverPlayer, newOffhand);
+                syncWithRetry(serverPlayer, newOffhand);
             }
             return;
         }
@@ -207,6 +264,16 @@ public class UseOffhandC2SPacket implements Packet {
     }
     
     /**
+     * 获取物品ID用于配置检查
+     */
+    private String getItemId(ItemStack stack) {
+        if (stack == null || stack.getItem() == null) {
+            return "unknown";
+        }
+        return stack.getItem().getUnlocalizedName();
+    }
+    
+    /**
      * 开始使用副手物品（用于摄食、喝药水等需要持续使用的物品）
      * 需要临时将副手物品放到主手位置，然后调用 setHeldItemInUse
      * 注意：不立即恢复主手，等物品使用完成后在 onItemUseFinish 中恢复
@@ -215,6 +282,9 @@ public class UseOffhandC2SPacket implements Packet {
         // 保存原始主手物品
         int currentSlot = player.inventory.currentItem;
         ItemStack originalMainhand = player.inventory.mainInventory[currentSlot];
+        
+        // 保存调用前所有快捷栏槽位的状态，用于检测鼠标滚轮滚动导致的物品错位
+        ItemStack[] hotbarBefore = OffhandUtils.copyHotbar(player.inventory);
         
         // 设置标记：正在使用副手物品
         offhandAccess.miteassistant$setUsingOffhand(true);
@@ -230,6 +300,40 @@ public class UseOffhandC2SPacket implements Packet {
         // 调用原版的 setHeldItemInUse 方法
         boolean success = player.setHeldItemInUse();
         
+        // 检查 currentItem 是否在调用期间改变了（玩家滚动了鼠标滚轮）
+        int newCurrentSlot = player.inventory.currentItem;
+        if (newCurrentSlot != currentSlot) {
+            // 玩家滚动了鼠标滚轮，currentItem 已改变
+            // MITE 的 setHeldItemInUse 使用 this.currentItem，可能把物品放到了错误的槽位
+            // 需要修复：把物品放回正确的槽位
+            
+            OffhandLog.warn("[OFFHAND] Player scrolled from slot {} to {} during setHeldItemInUse", currentSlot, newCurrentSlot);
+            
+            // 获取新槽位的物品（可能是被错误放置的物品）
+            ItemStack wrongSlotItem = player.inventory.mainInventory[newCurrentSlot];
+            
+            // 恢复新槽位为原来的物品
+            player.inventory.mainInventory[newCurrentSlot] = hotbarBefore[newCurrentSlot];
+            
+            // 将正在使用的物品放回原始槽位
+            player.inventory.mainInventory[currentSlot] = offhand;
+            
+            // 更新原始槽位为新槽位，但保留原来的 originalMainhand
+            // 因为新槽位可能是空的，我们需要保存的是使用副手前的原始主手物品
+            offhandAccess.miteassistant$setOriginalSlot(newCurrentSlot);
+            // 注意：不更新 originalMainhand，保持原来的值
+            
+            OffhandLog.info("[OFFHAND] Updated original slot to {} (keeping original mainhand: {})", 
+                newCurrentSlot, originalMainhand != null ? 
+                originalMainhand.getItem().getItemDisplayName(originalMainhand) : "null");
+            
+            // 同步被影响的槽位到客户端
+            if (player instanceof ServerPlayer serverPlayer) {
+                OffhandNetworkHelper.syncInventorySlot(serverPlayer, newCurrentSlot, player.inventory.mainInventory[newCurrentSlot]);
+                OffhandNetworkHelper.syncInventorySlot(serverPlayer, currentSlot, player.inventory.mainInventory[currentSlot]);
+            }
+        }
+        
         if (!success) {
             // 如果设置失败，恢复状态
             player.inventory.mainInventory[currentSlot] = originalMainhand;
@@ -241,9 +345,42 @@ public class UseOffhandC2SPacket implements Packet {
         } else {
             // 同步副手状态到客户端（副手为空，正在使用副手物品，附带原始主手用于渲染）
             if (player instanceof ServerPlayer serverPlayer) {
-                OffhandNetworkHelper.syncOffhandToClient(serverPlayer, null, true, originalMainhand);
+                syncWithRetry(serverPlayer, null, true, offhandAccess.miteassistant$getOriginalMainhand());
             }
         }
+    }
+    
+    /**
+     * 带重试机制的同步
+     */
+    private void syncWithRetry(net.minecraft.ServerPlayer serverPlayer, ItemStack offhand) {
+        syncWithRetry(serverPlayer, offhand, false, null);
+    }
+    
+    private void syncWithRetry(net.minecraft.ServerPlayer serverPlayer, ItemStack offhand, boolean isUsingOffhand, ItemStack originalMainhand) {
+        int maxRetries = OffhandConfig.getSyncRetries();
+        long retryDelay = OffhandConstants.SYNC_RETRY_DELAY_MS;
+        
+        for (int attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                OffhandNetworkHelper.syncOffhandToClient(serverPlayer, offhand, isUsingOffhand, originalMainhand);
+                OffhandLog.debug("[OFFHAND] Sync attempt {} successful", attempt + 1);
+                return;
+            } catch (Exception e) {
+                OffhandLog.warn("[OFFHAND] Sync attempt {} failed: {}", attempt + 1, e.getMessage());
+                
+                if (attempt < maxRetries) {
+                    try {
+                        Thread.sleep(retryDelay);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        }
+        
+        OffhandLog.error("[OFFHAND] Failed to sync offhand after {} attempts", maxRetries + 1);
     }
 
     @Override

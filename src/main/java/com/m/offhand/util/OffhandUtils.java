@@ -38,4 +38,24 @@ public final class OffhandUtils {
         }
         return hotbar;
     }
+
+    public static boolean canStackWithOffhand(ItemStack itemStack, ItemStack offhand) {
+        if (itemStack == null || offhand == null) {
+            return false;
+        }
+        
+        if (itemStack.itemID != offhand.itemID) {
+            return false;
+        }
+        
+        if (itemStack.getItemDamage() != offhand.getItemDamage()) {
+            return false;
+        }
+        
+        if (offhand.stackSize >= 64) {
+            return false;
+        }
+        
+        return true;
+    }
 }

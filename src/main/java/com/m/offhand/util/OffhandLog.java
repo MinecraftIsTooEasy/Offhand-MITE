@@ -22,6 +22,10 @@ public final class OffhandLog {
         LOGGER.warn(message, params);
     }
 
+    public static void error(String message, Object... params) {
+        LOGGER.error(message, params);
+    }
+
     public static void error(String message, Throwable throwable) {
         LOGGER.error(message, throwable);
     }
