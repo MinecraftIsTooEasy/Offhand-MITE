@@ -1,11 +1,9 @@
 package com.m.offhand;
 
 import com.m.offhand.config.OffhandConfig;
-import com.m.offhand.core.OffhandStateManager;
-import com.m.offhand.event.FishEventListen;
+import com.m.offhand.event.OffhandPlayerEventListener;
 import com.m.offhand.network.OffhandPacketHandler;
 import com.m.offhand.offhand.OffhandKeybindListener;
-import com.m.offhand.offhand.OffhandPlayerEventListener;
 import com.m.offhand.util.OffhandLog;
 import net.fabricmc.api.ModInitializer;
 import net.xiaoyu233.fml.ModResourceManager;
@@ -30,7 +28,6 @@ public class OffhandMod implements ModInitializer {
         
         OffhandConfig.init();
         
-        MITEEvents.MITE_EVENT_BUS.register(new FishEventListen());
         ModResourceManager.addResourcePackDomain(NameSpace);
 
         OffhandPacketHandler.register();

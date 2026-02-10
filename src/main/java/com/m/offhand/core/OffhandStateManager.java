@@ -7,15 +7,50 @@ import net.minecraft.EntityPlayer;
 import net.minecraft.ItemStack;
 import net.minecraft.NBTTagCompound;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class OffhandStateManager {
     
-    private static final Map<UUID, OffhandState> PLAYER_STATES = new HashMap<>();
+    private static final Map<String, OffhandState> PLAYER_STATES = new ConcurrentHashMap<>();
+    private static final long STATE_TIMEOUT_MS = 300000;
+    private static final long CLEANUP_INTERVAL_MS = 60000;
+    private static long lastCleanupTime = System.currentTimeMillis();
     
     private OffhandStateManager() {
+    }
+    
+    private static String getPlayerKey(EntityPlayer player) {
+        if (player == null) {
+            return null;
+        }
+        
+        UUID uuid = player.getUniqueIDSilent();
+        if (uuid != null) {
+            return uuid.toString();
+        }
+        
+        return "entity_" + player.entityId;
+    }
+    
+    public static OffhandState createState(EntityPlayer player) {
+        if (player == null) {
+            return null;
+        }
+        
+        String key = getPlayerKey(player);
+        if (key == null) {
+            OffhandLog.warn("[OFFHAND] Cannot create state for null player");
+            return null;
+        }
+        
+        OffhandState state = new OffhandState(key);
+        PLAYER_STATES.put(key, state);
+        state.markSynced();
+        
+        OffhandLog.debug("[OFFHAND] Created new state for player {}", player.getEntityName());
+        return state;
     }
     
     public static OffhandState getState(EntityPlayer player) {
@@ -23,16 +58,13 @@ public final class OffhandStateManager {
             return null;
         }
         
-        UUID uuid = player.getUniqueID();
-        OffhandState state = PLAYER_STATES.get(uuid);
-        
-        if (state == null) {
-            state = new OffhandState(uuid);
-            PLAYER_STATES.put(uuid, state);
-            OffhandLog.debug("[OFFHAND] Created new state for player {}", player.getEntityName());
+        String key = getPlayerKey(player);
+        if (key == null) {
+            OffhandLog.warn("[OFFHAND] Cannot get state for player with null key");
+            return null;
         }
         
-        return state;
+        return PLAYER_STATES.get(key);
     }
     
     public static void removeState(EntityPlayer player) {
@@ -40,18 +72,86 @@ public final class OffhandStateManager {
             return;
         }
         
-        UUID uuid = player.getUniqueID();
-        OffhandState state = PLAYER_STATES.remove(uuid);
+        String key = getPlayerKey(player);
+        if (key == null) {
+            return;
+        }
+        
+        OffhandState state = PLAYER_STATES.remove(key);
         
         if (state != null) {
+            state.clear();
             OffhandLog.debug("[OFFHAND] Removed state for player {}", player.getEntityName());
         }
     }
     
     public static void clearAllStates() {
         int size = PLAYER_STATES.size();
+        for (OffhandState state : PLAYER_STATES.values()) {
+            state.clear();
+        }
         PLAYER_STATES.clear();
         OffhandLog.info("[OFFHAND] Cleared {} player states", size);
+    }
+    
+    public static void cleanupStaleStates() {
+        long currentTime = System.currentTimeMillis();
+        
+        if (currentTime - lastCleanupTime < CLEANUP_INTERVAL_MS) {
+            return;
+        }
+        
+        lastCleanupTime = currentTime;
+        
+        int removedCount = 0;
+        Map.Entry<String, OffhandState> staleEntry = null;
+        
+        for (Map.Entry<String, OffhandState> entry : PLAYER_STATES.entrySet()) {
+            OffhandState state = entry.getValue();
+            if (state.isStale(STATE_TIMEOUT_MS)) {
+                staleEntry = entry;
+                break;
+            }
+        }
+        
+        if (staleEntry != null) {
+            staleEntry.getValue().clear();
+            PLAYER_STATES.remove(staleEntry.getKey());
+            removedCount++;
+            OffhandLog.debug("[OFFHAND] Removed stale state for key {}", staleEntry.getKey());
+        }
+        
+        if (removedCount > 0) {
+            OffhandLog.info("[OFFHAND] Cleaned up {} stale states", removedCount);
+        }
+    }
+    
+    public static void updateOffhand(EntityPlayer player, ItemStack offhand) {
+        OffhandState state = getState(player);
+        if (state != null) {
+            state.setOffhandStack(offhand);
+        }
+    }
+    
+    public static void updateUsingOffhand(EntityPlayer player, boolean using) {
+        OffhandState state = getState(player);
+        if (state != null) {
+            state.setUsingOffhand(using);
+        }
+    }
+    
+    public static void updateOriginalMainhand(EntityPlayer player, ItemStack mainhand) {
+        OffhandState state = getState(player);
+        if (state != null) {
+            state.setOriginalMainhand(mainhand);
+        }
+    }
+    
+    public static void updateOriginalSlot(EntityPlayer player, int slot) {
+        OffhandState state = getState(player);
+        if (state != null) {
+            state.setOriginalSlot(slot);
+        }
     }
     
     public static void saveStateToNBT(EntityPlayer player, NBTTagCompound tag) {
@@ -75,7 +175,7 @@ public final class OffhandStateManager {
         
         OffhandState state = getState(player);
         if (state == null) {
-            return;
+            state = createState(player);
         }
         
         NBTTagCompound stateTag = tag.getCompoundTag("OffhandState");
@@ -121,7 +221,7 @@ public final class OffhandStateManager {
     }
     
     public static class OffhandState {
-        private final UUID playerUuid;
+        private final String playerKey;
         private ItemStack offhandStack;
         private boolean usingOffhand;
         private ItemStack originalMainhand;
@@ -131,8 +231,8 @@ public final class OffhandStateManager {
         private int clientVersion;
         private int serverVersion;
         
-        public OffhandState(UUID playerUuid) {
-            this.playerUuid = playerUuid;
+        public OffhandState(String playerKey) {
+            this.playerKey = playerKey;
             this.originalSlot = -1;
             this.lastActionTime = System.currentTimeMillis();
             this.lastSyncTime = System.currentTimeMillis();
@@ -146,7 +246,7 @@ public final class OffhandStateManager {
             if (!ItemStack.areItemStacksEqual(this.offhandStack, stack)) {
                 this.offhandStack = stack;
                 this.lastActionTime = System.currentTimeMillis();
-                OffhandLog.debug("[OFFHAND] Offhand stack changed for player {}", this.playerUuid);
+                OffhandLog.debug("[OFFHAND] Offhand stack changed for player {}", this.playerKey);
             }
         }
         
@@ -158,7 +258,7 @@ public final class OffhandStateManager {
             if (this.usingOffhand != using) {
                 this.usingOffhand = using;
                 this.lastActionTime = System.currentTimeMillis();
-                OffhandLog.debug("[OFFHAND] Using offhand changed to {} for player {}", using, this.playerUuid);
+                OffhandLog.debug("[OFFHAND] Using offhand changed to {} for player {}", using, this.playerKey);
             }
         }
         
@@ -260,7 +360,7 @@ public final class OffhandStateManager {
             this.originalMainhand = null;
             this.originalSlot = -1;
             this.lastActionTime = System.currentTimeMillis();
-            OffhandLog.debug("[OFFHAND] Cleared state for player {}", this.playerUuid);
+            OffhandLog.debug("[OFFHAND] Cleared state for player {}", this.playerKey);
         }
     }
 }

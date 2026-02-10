@@ -2,6 +2,7 @@ package com.m.offhand.util;
 
 import com.m.offhand.api.OffhandAccess;
 import com.m.offhand.core.OffhandStateManager;
+import com.m.offhand.filter.OffhandItemFilter;
 import net.minecraft.EntityPlayer;
 import net.minecraft.ItemStack;
 import net.minecraft.ServerPlayer;
@@ -97,6 +98,11 @@ public final class OffhandValidator {
             return false;
         }
         
+        if (mainhand != null && OffhandItemFilter.isItemDisabled(mainhand)) {
+            OffhandLog.warn("[OFFHAND] Validation failed: mainhand item is disabled for offhand");
+            return false;
+        }
+        
         ItemStack offhand = access.miteassistant$getOffhandStack();
         if (!validateItem(offhand)) {
             return false;
@@ -118,6 +124,11 @@ public final class OffhandValidator {
         ItemStack offhand = access.miteassistant$getOffhandStack();
         if (!OffhandUtils.isValidOffhand(offhand)) {
             OffhandLog.warn("[OFFHAND] Validation failed: offhand is empty or invalid");
+            return false;
+        }
+        
+        if (OffhandItemFilter.isItemDisabled(offhand)) {
+            OffhandLog.warn("[OFFHAND] Validation failed: offhand item is disabled");
             return false;
         }
         
