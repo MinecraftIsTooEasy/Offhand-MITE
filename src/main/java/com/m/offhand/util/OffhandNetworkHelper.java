@@ -11,11 +11,11 @@ public final class OffhandNetworkHelper {
     }
 
     public static void syncOffhandToClient(ServerPlayer player, ItemStack offhand) {
-        syncOffhandToClient(player, offhand, false);
+        syncOffhandToClient(player, offhand, false, null);
     }
 
     public static void syncOffhandToClient(ServerPlayer player, ItemStack offhand, boolean isUsingOffhand) {
-        Network.sendToClient(player, new SyncOffhandS2CPacket(offhand, isUsingOffhand));
+        syncOffhandToClient(player, offhand, isUsingOffhand, null);
     }
 
     public static void syncOffhandToClient(ServerPlayer player, ItemStack offhand, boolean isUsingOffhand, ItemStack originalMainhand) {
@@ -23,6 +23,9 @@ public final class OffhandNetworkHelper {
     }
 
     public static void syncInventorySlot(ServerPlayer player, int slot, ItemStack stack) {
+        if (player == null || player.playerNetServerHandler == null) {
+            return;
+        }
         player.playerNetServerHandler.sendPacketToPlayer(
                 new Packet5PlayerInventory(player.entityId, slot, stack).setFullInventory()
         );

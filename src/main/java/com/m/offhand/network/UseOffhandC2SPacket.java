@@ -12,10 +12,6 @@ import moddedmite.rustedironcore.network.Packet;
 import moddedmite.rustedironcore.network.PacketByteBuf;
 import net.minecraft.*;
 
-/**
- * 客户端 → 服务器：请求使用副手物品
- * 这个包完全绕过 MITE 的 filter 检查系统
- */
 public class UseOffhandC2SPacket implements Packet {
     public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.NameSpace, "use_offhand");
 

@@ -1,17 +1,15 @@
 package com.m.offhand.network;
 
-import  com.m.offhand.OffhandMod;
+import com.m.offhand.OffhandMod;
 import com.m.offhand.api.OffhandAccess;
+import com.m.offhand.core.OffhandStateManager;
 import moddedmite.rustedironcore.network.Packet;
 import moddedmite.rustedironcore.network.PacketByteBuf;
 import net.minecraft.EntityPlayer;
 import net.minecraft.ItemStack;
+import net.minecraft.Packet250CustomPayload;
 import net.minecraft.ResourceLocation;
 
-/**
- * 服务端 → 客户端：同步副手物品、使用状态和原始主手物品。
- * 当副手物品正在使用时（拉弓、进食等），同时同步原始主手物品以便客户端正确渲染。
- */
 public class SyncOffhandS2CPacket implements Packet {
     public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.NameSpace, "sync_offhand");
 
@@ -49,9 +47,12 @@ public class SyncOffhandS2CPacket implements Packet {
     @Override
     public void apply(EntityPlayer entityPlayer) {
         if (!(entityPlayer instanceof OffhandAccess offhandAccess)) return;
+        
         offhandAccess.miteassistant$setOffhandStack(this.offhand);
         offhandAccess.miteassistant$setUsingOffhand(this.isUsingOffhand);
         offhandAccess.miteassistant$setOriginalMainhand(this.originalMainhand);
+        
+        OffhandStateManager.syncFromMixin(entityPlayer);
     }
 
     @Override

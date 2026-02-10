@@ -13,10 +13,7 @@ public final class OffhandUtils {
 
     @Nullable
     public static OffhandAccess asOffhandAccess(EntityPlayer player) {
-        if (player instanceof OffhandAccess access) {
-            return access;
-        }
-        return null;
+        return player instanceof OffhandAccess access ? access : null;
     }
 
     public static boolean isValidOffhand(ItemStack offhand) {
@@ -28,14 +25,17 @@ public final class OffhandUtils {
     }
 
     public static boolean isPlayerBusy(EntityPlayer player, OffhandAccess access) {
-        return access.miteassistant$isUsingOffhand() || player.isUsingItem();
+        return access != null && (access.miteassistant$isUsingOffhand() || player.isUsingItem());
     }
 
     public static ItemStack[] copyHotbar(InventoryPlayer inventory) {
-        ItemStack[] hotbar = new ItemStack[OffhandConstants.HOTBAR_SIZE];
-        for (int i = 0; i < OffhandConstants.HOTBAR_SIZE; i++) {
-            hotbar[i] = inventory.mainInventory[i];
+        if (inventory == null || inventory.mainInventory == null) {
+            return new ItemStack[OffhandConstants.HOTBAR_SIZE];
         }
+        
+        ItemStack[] hotbar = new ItemStack[OffhandConstants.HOTBAR_SIZE];
+        int length = Math.min(hotbar.length, inventory.mainInventory.length);
+        System.arraycopy(inventory.mainInventory, 0, hotbar, 0, length);
         return hotbar;
     }
 
@@ -52,10 +52,6 @@ public final class OffhandUtils {
             return false;
         }
         
-        if (offhand.stackSize >= 64) {
-            return false;
-        }
-        
-        return true;
+        return offhand.stackSize < 64;
     }
 }
