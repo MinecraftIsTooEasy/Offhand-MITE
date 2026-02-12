@@ -1,5 +1,6 @@
 package com.m.offhand.offhand;
 
+import com.m.offhand.api.Hand;
 import com.m.offhand.api.OffhandAccess;
 import com.m.offhand.config.OffhandConfig;
 import com.m.offhand.network.OffhandPacketHandler;
@@ -113,8 +114,8 @@ public class OffhandKeybindListener implements IKeybindingListener, ITickListene
         }
         lastSwapTime = now;
 
-        lastMainhand = player.getHeldItemStack();
-        lastOffhand = offhandAccess.miteassistant$getOffhandStack();
+        lastMainhand = offhandAccess.miteassistant$getStackInHand(Hand.MAIN_HAND);
+        lastOffhand = offhandAccess.miteassistant$getStackInHand(Hand.OFF_HAND);
         
         OffhandLog.debug("[OFFHAND] Sending swap request to server");
         OffhandPacketHandler.sendToServer(new SwapOffhandC2SPacket());
@@ -149,10 +150,10 @@ public class OffhandKeybindListener implements IKeybindingListener, ITickListene
             return;
         }
         
-        ItemStack mainhand = player.getHeldItemStack();
+        ItemStack mainhand = offhandAccess.miteassistant$getStackInHand(Hand.MAIN_HAND);
         if (mainhand != null) return;
         
-        ItemStack offhand = offhandAccess.miteassistant$getOffhandStack();
+        ItemStack offhand = offhandAccess.miteassistant$getStackInHand(Hand.OFF_HAND);
         if (!OffhandUtils.isValidOffhand(offhand)) return;
         
         if (now - lastUseTime < OffhandConfig.getUseCooldown()) {

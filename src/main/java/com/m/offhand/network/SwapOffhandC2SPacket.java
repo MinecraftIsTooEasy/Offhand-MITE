@@ -1,11 +1,13 @@
 package com.m.offhand.network;
 
 import com.m.offhand.OffhandMod;
+import com.m.offhand.api.Hand;
 import com.m.offhand.api.OffhandAccess;
 import com.m.offhand.config.OffhandConfig;
 import com.m.offhand.core.OffhandStateManager;
 import com.m.offhand.util.OffhandConstants;
 import com.m.offhand.util.OffhandLog;
+import com.m.offhand.util.OffhandNetworkHelper;
 import com.m.offhand.util.OffhandUtils;
 import com.m.offhand.util.OffhandValidator;
 import moddedmite.rustedironcore.network.Packet;
@@ -57,30 +59,30 @@ public class SwapOffhandC2SPacket implements Packet {
         }
 
         int currentSlot = entityPlayer.inventory.currentItem;
-        ItemStack main = entityPlayer.inventory.getStackInSlot(currentSlot);
-        ItemStack off = offhandAccess.miteassistant$getOffhandStack();
+        ItemStack main = offhandAccess.miteassistant$getStackInHand(Hand.MAIN_HAND);
+        ItemStack off = offhandAccess.miteassistant$getStackInHand(Hand.OFF_HAND);
 
         OffhandLog.debug("[OFFHAND] Swapping mainhand {} with offhand {}", 
             main != null ? main.getItem().getItemDisplayName(main) : "null",
             off != null ? off.getItem().getItemDisplayName(off) : "null");
 
-        offhandAccess.miteassistant$setOffhandStack(main);
-        entityPlayer.inventory.setInventorySlotContents(currentSlot, off);
+        offhandAccess.miteassistant$setStackInHand(Hand.OFF_HAND, main);
+        offhandAccess.miteassistant$setStackInHand(Hand.MAIN_HAND, off);
 
         OffhandStateManager.syncFromMixin(entityPlayer);
 
         if (entityPlayer instanceof net.minecraft.ServerPlayer serverPlayer) {
-            syncWithRetry(serverPlayer, offhandAccess.miteassistant$getOffhandStack());
+            syncWithRetry(serverPlayer, offhandAccess.miteassistant$getOffhandStack(), offhandAccess.miteassistant$getActiveHand());
         }
     }
     
-    private void syncWithRetry(net.minecraft.ServerPlayer serverPlayer, ItemStack offhand) {
+    private void syncWithRetry(net.minecraft.ServerPlayer serverPlayer, ItemStack offhand, Hand activeHand) {
         int maxRetries = OffhandConfig.getSyncRetries();
         long retryDelay = OffhandConstants.SYNC_RETRY_DELAY_MS;
         
         for (int attempt = 0; attempt <= maxRetries; attempt++) {
             try {
-                OffhandPacketHandler.sendToClient(serverPlayer, new SyncOffhandS2CPacket(offhand));
+                OffhandNetworkHelper.syncOffhandToClient(serverPlayer, offhand, false, null, activeHand);
                 OffhandLog.debug("[OFFHAND] Sync attempt {} successful", attempt + 1);
                 return;
             } catch (Exception e) {

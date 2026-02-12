@@ -1,5 +1,6 @@
 package com.m.offhand.mixin;
 
+import com.m.offhand.api.Hand;
 import com.m.offhand.api.OffhandAccess;
 import com.m.offhand.core.OffhandStateManager;
 import com.m.offhand.util.OffhandUtils;
@@ -32,6 +33,9 @@ public abstract class OffhandEntityPlayerMixin implements OffhandAccess {
     
     @Unique
     private int miteassistant$originalSlot = -1;
+    
+    @Unique
+    private Hand miteassistant$activeHand = Hand.MAIN_HAND;
 
     @Override
     public ItemStack miteassistant$getOffhandStack() {
@@ -74,6 +78,37 @@ public abstract class OffhandEntityPlayerMixin implements OffhandAccess {
     @Override
     public void miteassistant$setOriginalSlot(int slot) {
         this.miteassistant$originalSlot = slot;
+        OffhandStateManager.syncFromMixin((EntityPlayer) (Object) this);
+    }
+    
+    @Override
+    public ItemStack miteassistant$getStackInHand(Hand hand) {
+        if (hand == Hand.MAIN_HAND) {
+            return this.inventory.getCurrentItemStack();
+        } else if (hand == Hand.OFF_HAND) {
+            return this.miteassistant$offhand;
+        }
+        return null;
+    }
+    
+    @Override
+    public void miteassistant$setStackInHand(Hand hand, ItemStack stack) {
+        if (hand == Hand.MAIN_HAND) {
+            this.inventory.setInventorySlotContents(this.inventory.currentItem, stack);
+        } else if (hand == Hand.OFF_HAND) {
+            this.miteassistant$offhand = stack;
+            OffhandStateManager.syncFromMixin((EntityPlayer) (Object) this);
+        }
+    }
+    
+    @Override
+    public Hand miteassistant$getActiveHand() {
+        return this.miteassistant$activeHand;
+    }
+    
+    @Override
+    public void miteassistant$setActiveHand(Hand hand) {
+        this.miteassistant$activeHand = hand;
         OffhandStateManager.syncFromMixin((EntityPlayer) (Object) this);
     }
 
@@ -151,6 +186,8 @@ public abstract class OffhandEntityPlayerMixin implements OffhandAccess {
             tag.setCompoundTag("MiteAssistantOffhand", stackTag);
         }
         
+        tag.setInteger("MiteAssistantActiveHand", this.miteassistant$activeHand.ordinal());
+        
         OffhandStateManager.saveStateToNBT((EntityPlayer) (Object) this, tag);
     }
 
@@ -163,6 +200,14 @@ public abstract class OffhandEntityPlayerMixin implements OffhandAccess {
             this.miteassistant$offhand = null;
         }
         
+        if (tag.hasKey("MiteAssistantActiveHand")) {
+            int handOrdinal = tag.getInteger("MiteAssistantActiveHand");
+            Hand[] hands = Hand.values();
+            if (handOrdinal >= 0 && handOrdinal < hands.length) {
+                this.miteassistant$activeHand = hands[handOrdinal];
+            }
+        }
+        
         OffhandStateManager.loadStateFromNBT((EntityPlayer) (Object) this, tag);
     }
 
@@ -170,6 +215,7 @@ public abstract class OffhandEntityPlayerMixin implements OffhandAccess {
     private void miteassistant$cloneOffhand(EntityPlayer oldPlayer, boolean par2, CallbackInfo ci) {
         if (oldPlayer instanceof OffhandAccess old) {
             this.miteassistant$offhand = old.miteassistant$getOffhandStack();
+            this.miteassistant$activeHand = old.miteassistant$getActiveHand();
             OffhandStateManager.syncFromMixin((EntityPlayer) (Object) this);
         }
     }

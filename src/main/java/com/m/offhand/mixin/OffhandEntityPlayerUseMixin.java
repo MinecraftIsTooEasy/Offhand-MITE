@@ -1,5 +1,6 @@
 package com.m.offhand.mixin;
 
+import com.m.offhand.api.Hand;
 import com.m.offhand.api.OffhandAccess;
 import com.m.offhand.config.OffhandConfig;
 import com.m.offhand.core.OffhandStateManager;
@@ -152,6 +153,7 @@ public abstract class OffhandEntityPlayerUseMixin {
     
     private void clearOffhandState(OffhandAccess offhandAccess) {
         offhandAccess.miteassistant$setUsingOffhand(false);
+        offhandAccess.miteassistant$setActiveHand(Hand.MAIN_HAND);
         offhandAccess.miteassistant$setOriginalMainhand(null);
         offhandAccess.miteassistant$setOriginalSlot(-1);
     }

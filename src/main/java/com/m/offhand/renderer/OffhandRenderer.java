@@ -1,5 +1,6 @@
 package com.m.offhand.renderer;
 
+import com.m.offhand.api.Hand;
 import com.m.offhand.api.OffhandAccess;
 import com.m.offhand.util.OffhandUtils;
 import net.minecraft.*;
@@ -21,18 +22,18 @@ public final class OffhandRenderer {
         if (!(playerObj instanceof OffhandAccess offhandAccess)) return;
         
         EntityClientPlayerMP player = mc.thePlayer;
-        boolean isUsingOffhand = offhandAccess.miteassistant$isUsingOffhand();
+        Hand activeHand = offhandAccess.miteassistant$getActiveHand();
         
         ItemStack itemToRenderInOffhand;
-        if (isUsingOffhand) {
+        if (activeHand == Hand.OFF_HAND) {
             itemToRenderInOffhand = player.inventory.getCurrentItemStack();
         } else {
-            itemToRenderInOffhand = offhandAccess.miteassistant$getOffhandStack();
+            itemToRenderInOffhand = offhandAccess.miteassistant$getStackInHand(Hand.OFF_HAND);
         }
         
         if (!OffhandUtils.isValidOffhand(itemToRenderInOffhand)) return;
         
-        if (isUsingOffhand) {
+        if (activeHand == Hand.OFF_HAND) {
             renderOffhandItemInUse(mc, partialTicks, itemToRenderInOffhand, player);
         } else {
             renderOffhandItemStatic(mc, partialTicks, itemToRenderInOffhand, player);
@@ -196,11 +197,12 @@ public final class OffhandRenderer {
         Object playerObj = mc.thePlayer;
         if (!(playerObj instanceof OffhandAccess offhandAccess)) return;
         
+        Hand activeHand = offhandAccess.miteassistant$getActiveHand();
         ItemStack offhand;
-        if (offhandAccess.miteassistant$isUsingOffhand()) {
+        if (activeHand == Hand.OFF_HAND) {
             offhand = mc.thePlayer.inventory.getCurrentItemStack();
         } else {
-            offhand = offhandAccess.miteassistant$getOffhandStack();
+            offhand = offhandAccess.miteassistant$getStackInHand(Hand.OFF_HAND);
         }
         
         if (!OffhandUtils.isValidOffhand(offhand)) return;

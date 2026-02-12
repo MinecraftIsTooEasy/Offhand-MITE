@@ -1,5 +1,6 @@
 package com.m.offhand.util;
 
+import com.m.offhand.api.Hand;
 import com.m.offhand.api.OffhandAccess;
 import com.m.offhand.core.OffhandStateManager;
 import com.m.offhand.filter.OffhandItemFilter;
@@ -241,6 +242,7 @@ public final class OffhandValidator {
     
     private static void clearOffhandState(OffhandAccess access) {
         access.miteassistant$setUsingOffhand(false);
+        access.miteassistant$setActiveHand(Hand.MAIN_HAND);
         access.miteassistant$setOriginalMainhand(null);
         access.miteassistant$setOriginalSlot(-1);
     }

@@ -1,6 +1,7 @@
 package com.m.offhand.network;
 
 import com.m.offhand.OffhandMod;
+import com.m.offhand.api.Hand;
 import com.m.offhand.api.OffhandAccess;
 import com.m.offhand.config.OffhandConfig;
 import com.m.offhand.util.OffhandConstants;
@@ -202,13 +203,14 @@ public class UseOffhandC2SPacket implements Packet {
                 String actionDesc = getActionDescription(action, offhand);
                 OffhandLog.info("[OFFHAND] {}: {}", actionDesc, offhand.getItem().getItemDisplayName(offhand));
                 offhandAccess.miteassistant$setUsingOffhand(true);
+                offhandAccess.miteassistant$setActiveHand(Hand.OFF_HAND);
                 offhandAccess.miteassistant$setOriginalMainhand(originalMainhand);
                 offhandAccess.miteassistant$setOriginalSlot(currentSlot);
                 offhandAccess.miteassistant$setOffhandStack(null);
                 
                 // 同步副手状态到客户端（副手为空，正在使用副手物品，附带原始主手用于渲染）
                 if (entityPlayer instanceof ServerPlayer serverPlayer) {
-                    syncWithRetry(serverPlayer, null, true, originalMainhand);
+                    syncWithRetry(serverPlayer, null, true, originalMainhand, Hand.OFF_HAND);
                 }
                 return;
             }
@@ -284,6 +286,7 @@ public class UseOffhandC2SPacket implements Packet {
         
         // 设置标记：正在使用副手物品
         offhandAccess.miteassistant$setUsingOffhand(true);
+        offhandAccess.miteassistant$setActiveHand(Hand.OFF_HAND);
         offhandAccess.miteassistant$setOriginalMainhand(originalMainhand);
         offhandAccess.miteassistant$setOriginalSlot(currentSlot);  // 保存原始槽位
         
@@ -335,13 +338,14 @@ public class UseOffhandC2SPacket implements Packet {
             player.inventory.mainInventory[currentSlot] = originalMainhand;
             offhandAccess.miteassistant$setOffhandStack(offhand);
             offhandAccess.miteassistant$setUsingOffhand(false);
+            offhandAccess.miteassistant$setActiveHand(Hand.MAIN_HAND);
             offhandAccess.miteassistant$setOriginalMainhand(null);
             offhandAccess.miteassistant$setOriginalSlot(-1);
             OffhandLog.warn("[OFFHAND] Failed to start using offhand item: {}", offhand.getItem().getItemDisplayName(offhand));
         } else {
             // 同步副手状态到客户端（副手为空，正在使用副手物品，附带原始主手用于渲染）
             if (player instanceof ServerPlayer serverPlayer) {
-                syncWithRetry(serverPlayer, null, true, offhandAccess.miteassistant$getOriginalMainhand());
+                syncWithRetry(serverPlayer, null, true, offhandAccess.miteassistant$getOriginalMainhand(), Hand.OFF_HAND);
             }
         }
     }
@@ -350,16 +354,20 @@ public class UseOffhandC2SPacket implements Packet {
      * 带重试机制的同步
      */
     private void syncWithRetry(net.minecraft.ServerPlayer serverPlayer, ItemStack offhand) {
-        syncWithRetry(serverPlayer, offhand, false, null);
+        syncWithRetry(serverPlayer, offhand, false, null, Hand.MAIN_HAND);
     }
     
     private void syncWithRetry(net.minecraft.ServerPlayer serverPlayer, ItemStack offhand, boolean isUsingOffhand, ItemStack originalMainhand) {
+        syncWithRetry(serverPlayer, offhand, isUsingOffhand, originalMainhand, Hand.MAIN_HAND);
+    }
+    
+    private void syncWithRetry(net.minecraft.ServerPlayer serverPlayer, ItemStack offhand, boolean isUsingOffhand, ItemStack originalMainhand, Hand activeHand) {
         int maxRetries = OffhandConfig.getSyncRetries();
         long retryDelay = OffhandConstants.SYNC_RETRY_DELAY_MS;
         
         for (int attempt = 0; attempt <= maxRetries; attempt++) {
             try {
-                OffhandNetworkHelper.syncOffhandToClient(serverPlayer, offhand, isUsingOffhand, originalMainhand);
+                OffhandNetworkHelper.syncOffhandToClient(serverPlayer, offhand, isUsingOffhand, originalMainhand, activeHand);
                 OffhandLog.debug("[OFFHAND] Sync attempt {} successful", attempt + 1);
                 return;
             } catch (Exception e) {
