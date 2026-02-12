@@ -3,13 +3,12 @@ package com.m.offhand.network;
 import com.m.offhand.OffhandMod;
 import com.m.offhand.api.Hand;
 import com.m.offhand.api.OffhandAccess;
-import com.m.offhand.core.OffhandStateManager;
 import moddedmite.rustedironcore.network.Packet;
 import moddedmite.rustedironcore.network.PacketByteBuf;
 import net.minecraft.EntityPlayer;
 import net.minecraft.ItemStack;
-import net.minecraft.Packet250CustomPayload;
 import net.minecraft.ResourceLocation;
+import net.minecraft.ServerPlayer;
 
 public class SyncOffhandS2CPacket implements Packet {
     public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.NameSpace, "sync_offhand");
@@ -21,14 +20,6 @@ public class SyncOffhandS2CPacket implements Packet {
 
     public SyncOffhandS2CPacket(ItemStack offhand) {
         this(offhand, false, null, Hand.MAIN_HAND);
-    }
-
-    public SyncOffhandS2CPacket(ItemStack offhand, boolean isUsingOffhand) {
-        this(offhand, isUsingOffhand, null, Hand.MAIN_HAND);
-    }
-
-    public SyncOffhandS2CPacket(ItemStack offhand, boolean isUsingOffhand, ItemStack originalMainhand) {
-        this(offhand, isUsingOffhand, originalMainhand, Hand.MAIN_HAND);
     }
 
     public SyncOffhandS2CPacket(ItemStack offhand, boolean isUsingOffhand, ItemStack originalMainhand, Hand activeHand) {
@@ -48,23 +39,20 @@ public class SyncOffhandS2CPacket implements Packet {
     }
 
     @Override
-    public void write(PacketByteBuf packetByteBuf) {
-        packetByteBuf.writeItemStack(this.offhand);
-        packetByteBuf.writeBoolean(this.isUsingOffhand);
-        packetByteBuf.writeItemStack(this.originalMainhand);
-        packetByteBuf.writeByte(this.activeHand.ordinal());
+    public void write(PacketByteBuf buf) {
+        buf.writeItemStack(this.offhand);
+        buf.writeBoolean(this.isUsingOffhand);
+        buf.writeItemStack(this.originalMainhand);
+        buf.writeByte(this.activeHand.ordinal());
     }
 
     @Override
     public void apply(EntityPlayer entityPlayer) {
-        if (!(entityPlayer instanceof OffhandAccess offhandAccess)) return;
-        
-        offhandAccess.miteassistant$setOffhandStack(this.offhand);
-        offhandAccess.miteassistant$setUsingOffhand(this.isUsingOffhand);
-        offhandAccess.miteassistant$setOriginalMainhand(this.originalMainhand);
-        offhandAccess.miteassistant$setActiveHand(this.activeHand);
-        
-        OffhandStateManager.syncFromMixin(entityPlayer);
+        OffhandAccess access = (OffhandAccess) entityPlayer;
+        access.miteassistant$setOffhandStack(this.offhand);
+        access.miteassistant$setUsingOffhand(this.isUsingOffhand);
+        access.miteassistant$setOriginalMainhand(this.originalMainhand);
+        access.miteassistant$setActiveHand(this.activeHand);
     }
 
     @Override
@@ -72,4 +60,3 @@ public class SyncOffhandS2CPacket implements Packet {
         return CHANNEL;
     }
 }
-

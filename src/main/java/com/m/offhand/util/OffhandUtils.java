@@ -8,6 +8,8 @@ import net.minecraft.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 public final class OffhandUtils {
+    private static final int HOTBAR_SIZE = 9;
+    
     private OffhandUtils() {
     }
 
@@ -30,28 +32,19 @@ public final class OffhandUtils {
 
     public static ItemStack[] copyHotbar(InventoryPlayer inventory) {
         if (inventory == null || inventory.mainInventory == null) {
-            return new ItemStack[OffhandConstants.HOTBAR_SIZE];
+            return new ItemStack[HOTBAR_SIZE];
         }
         
-        ItemStack[] hotbar = new ItemStack[OffhandConstants.HOTBAR_SIZE];
+        ItemStack[] hotbar = new ItemStack[HOTBAR_SIZE];
         int length = Math.min(hotbar.length, inventory.mainInventory.length);
         System.arraycopy(inventory.mainInventory, 0, hotbar, 0, length);
         return hotbar;
     }
 
     public static boolean canStackWithOffhand(ItemStack itemStack, ItemStack offhand) {
-        if (itemStack == null || offhand == null) {
-            return false;
-        }
-        
-        if (itemStack.itemID != offhand.itemID) {
-            return false;
-        }
-        
-        if (itemStack.getItemDamage() != offhand.getItemDamage()) {
-            return false;
-        }
-        
+        if (itemStack == null || offhand == null) return false;
+        if (itemStack.itemID != offhand.itemID) return false;
+        if (itemStack.getItemDamage() != offhand.getItemDamage()) return false;
         return offhand.stackSize < 64;
     }
 }

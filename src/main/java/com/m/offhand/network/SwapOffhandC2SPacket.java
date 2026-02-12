@@ -4,17 +4,14 @@ import com.m.offhand.OffhandMod;
 import com.m.offhand.api.Hand;
 import com.m.offhand.api.OffhandAccess;
 import com.m.offhand.config.OffhandConfig;
-import com.m.offhand.core.OffhandStateManager;
-import com.m.offhand.util.OffhandConstants;
-import com.m.offhand.util.OffhandLog;
 import com.m.offhand.util.OffhandNetworkHelper;
 import com.m.offhand.util.OffhandUtils;
-import com.m.offhand.util.OffhandValidator;
 import moddedmite.rustedironcore.network.Packet;
 import moddedmite.rustedironcore.network.PacketByteBuf;
 import net.minecraft.EntityPlayer;
 import net.minecraft.ItemStack;
 import net.minecraft.ResourceLocation;
+import net.minecraft.ServerPlayer;
 
 public class SwapOffhandC2SPacket implements Packet {
     public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.NameSpace, "swap_offhand");
@@ -31,75 +28,23 @@ public class SwapOffhandC2SPacket implements Packet {
 
     @Override
     public void apply(EntityPlayer entityPlayer) {
-        OffhandAccess offhandAccess = OffhandUtils.asOffhandAccess(entityPlayer);
-        if (offhandAccess == null) {
-            OffhandLog.warn("[OFFHAND] Swap failed: player does not implement OffhandAccess");
-            return;
-        }
-
-        if (!OffhandConfig.enableOffhand.get()) {
-            OffhandLog.debug("[OFFHAND] Swap failed: offhand is disabled in config");
-            return;
-        }
-
-        if (OffhandUtils.isPlayerBusy(entityPlayer, offhandAccess)) {
-            OffhandLog.debug("[OFFHAND] Swap failed: player is busy");
-            return;
-        }
-
-        if (OffhandConfig.isStrictValidationEnabled()) {
-            if (!OffhandValidator.validateSwap(entityPlayer, offhandAccess)) {
-                OffhandLog.warn("[OFFHAND] Swap failed: validation failed");
-                
-                if (OffhandConfig.isAutoRecoveryEnabled()) {
-                    OffhandValidator.recoverState(entityPlayer, offhandAccess);
-                }
-                return;
-            }
-        }
-
-        int currentSlot = entityPlayer.inventory.currentItem;
-        ItemStack main = offhandAccess.miteassistant$getStackInHand(Hand.MAIN_HAND);
-        ItemStack off = offhandAccess.miteassistant$getStackInHand(Hand.OFF_HAND);
-
-        OffhandLog.debug("[OFFHAND] Swapping mainhand {} with offhand {}", 
-            main != null ? main.getItem().getItemDisplayName(main) : "null",
-            off != null ? off.getItem().getItemDisplayName(off) : "null");
-
-        offhandAccess.miteassistant$setStackInHand(Hand.OFF_HAND, main);
-        offhandAccess.miteassistant$setStackInHand(Hand.MAIN_HAND, off);
-
-        OffhandStateManager.syncFromMixin(entityPlayer);
-
-        if (entityPlayer instanceof net.minecraft.ServerPlayer serverPlayer) {
-            syncWithRetry(serverPlayer, offhandAccess.miteassistant$getOffhandStack(), offhandAccess.miteassistant$getActiveHand());
-        }
-    }
-    
-    private void syncWithRetry(net.minecraft.ServerPlayer serverPlayer, ItemStack offhand, Hand activeHand) {
-        int maxRetries = OffhandConfig.getSyncRetries();
-        long retryDelay = OffhandConstants.SYNC_RETRY_DELAY_MS;
+        if (entityPlayer.worldObj.isRemote) return;
         
-        for (int attempt = 0; attempt <= maxRetries; attempt++) {
-            try {
-                OffhandNetworkHelper.syncOffhandToClient(serverPlayer, offhand, false, null, activeHand);
-                OffhandLog.debug("[OFFHAND] Sync attempt {} successful", attempt + 1);
-                return;
-            } catch (Exception e) {
-                OffhandLog.warn("[OFFHAND] Sync attempt {} failed: {}", attempt + 1, e.getMessage());
-                
-                if (attempt < maxRetries) {
-                    try {
-                        Thread.sleep(retryDelay);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-                }
-            }
-        }
+        OffhandAccess access = (OffhandAccess) entityPlayer;
         
-        OffhandLog.error("[OFFHAND] Failed to sync offhand after {} attempts", maxRetries + 1);
+        if (!OffhandConfig.enableOffhand.get()) return;
+        
+        if (OffhandUtils.isPlayerBusy(entityPlayer, access)) return;
+
+        ItemStack main = access.miteassistant$getStackInHand(Hand.MAIN_HAND);
+        ItemStack off = access.miteassistant$getStackInHand(Hand.OFF_HAND);
+
+        access.miteassistant$setStackInHand(Hand.OFF_HAND, main);
+        access.miteassistant$setStackInHand(Hand.MAIN_HAND, off);
+
+        if (entityPlayer instanceof ServerPlayer serverPlayer) {
+            OffhandNetworkHelper.syncOffhandToClient(serverPlayer, access.miteassistant$getOffhandStack());
+        }
     }
 
     @Override
@@ -107,4 +52,3 @@ public class SwapOffhandC2SPacket implements Packet {
         return CHANNEL;
     }
 }
-
