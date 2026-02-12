@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public class OffhandMod implements ModInitializer {
     public static final String MOD_NAME = "mite_offhand";
-    public static final String NameSpace = "offhand";
+    public static final String MITEOFFHAND = "offhand";
 
     @Override
     public Optional<ConfigRegistry> createConfig() {
@@ -22,7 +22,7 @@ public class OffhandMod implements ModInitializer {
     public void onInitialize() {
         OffhandConfig.init();
         
-        ModResourceManager.addResourcePackDomain(NameSpace);
+        ModResourceManager.addResourcePackDomain(MITEOFFHAND);
         OffhandPacketHandler.register();
 
         if (!moddedmite.rustedironcore.api.util.FabricUtil.isServer()) {

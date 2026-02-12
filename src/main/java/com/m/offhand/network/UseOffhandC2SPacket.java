@@ -11,7 +11,7 @@ import moddedmite.rustedironcore.network.PacketByteBuf;
 import net.minecraft.*;
 
 public class UseOffhandC2SPacket implements Packet {
-    public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.NameSpace, "use_offhand");
+    public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.MITEOFFHAND, "use_offhand");
     private static final float ITEM_USE_SPEED = 1.0F;
 
     private final boolean ctrlIsDown;

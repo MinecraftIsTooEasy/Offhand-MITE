@@ -14,7 +14,7 @@ import net.minecraft.ResourceLocation;
 import net.minecraft.ServerPlayer;
 
 public class SwapOffhandC2SPacket implements Packet {
-    public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.NameSpace, "swap_offhand");
+    public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.MITEOFFHAND, "swap_offhand");
 
     public SwapOffhandC2SPacket() {
     }

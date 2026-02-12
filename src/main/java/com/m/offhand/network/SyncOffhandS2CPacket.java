@@ -11,7 +11,7 @@ import net.minecraft.ResourceLocation;
 import net.minecraft.ServerPlayer;
 
 public class SyncOffhandS2CPacket implements Packet {
-    public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.NameSpace, "sync_offhand");
+    public static final ResourceLocation CHANNEL = new ResourceLocation(OffhandMod.MITEOFFHAND, "sync_offhand");
 
     private final ItemStack offhand;
     private final boolean isUsingOffhand;
