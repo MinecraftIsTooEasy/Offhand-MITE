@@ -25,7 +25,7 @@ public class OffhandConfig {
 
     private static final Set<String> offhandBlacklist = new HashSet<>();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path CONFIG_PATH = Paths.get("config", "offhand-mite.json");
+    private static final Path CONFIG_PATH = Paths.get("config", "Offhand-mite.json");
 
     public static synchronized void init() {
         offhandBlacklist.clear();
