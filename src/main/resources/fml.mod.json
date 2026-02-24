@@ -1,37 +1,31 @@
 {
   "schemaVersion": 1,
-  "id": "mite_offhand",
+  "id": "offhand",
   "version": "${version}",
   "depends": {
     "fishmodloader": ">=3.4.0",
     "minecraft": "1.6.4-mite",
     "java": ">=17",
-    "rusted_iron_core": ">=1.3.5",
-    "many-lib": ">=2.2.3",
-    "modern-mite": ">=3.0.0"
+    "rusted_iron_core": ">=1.3.5"
   },
   "environment": "*",
-  "name": "MITE-OFFHAND",
-  "description": "添加高版本(offhand)副手 -- MITE",
+  "name": "Offhand-MITE",
+  "description": "添加高版本副手系统到MITE",
   "authors": [
     "M"
   ],
   "entrypoints": {
     "main": [
-      "com.m.offhand.OffhandMod"
+      "com.m.offhand.Offhand"
     ]
   },
   "mixins": [
     "offhand.mixins.json"
   ],
-  "accessWidener": "offhand.accesswidener",
   "icon": "icon.png",
   "contact": {
     "homepage": "https://minecraftistooeasy.github.io/",
     "sources": "https://github.com/MinecraftIsTooEasy/Offhand-MITE"
   },
-  "license": "CC0-1.0",
-  "suggests": {
-    "another-mod": "*"
-  }
+  "license": "CC0-1.0"
 }

@@ -1,20 +1,29 @@
 package com.m.offhand.network;
 
-import moddedmite.rustedironcore.network.Network;
+import com.m.offhand.Offhand;
 import moddedmite.rustedironcore.network.PacketReader;
 
 public final class OffhandPacketHandler {
-    
-    private OffhandPacketHandler() {
+
+    public static final int PROTOCOL_VERSION = 1;
+
+    public static boolean isCompatible(int protocolVersion) {
+        return protocolVersion == PROTOCOL_VERSION;
     }
-    
-    public static void register() {
-        PacketReader.registerServerPacketReader(SwapOffhandC2SPacket.CHANNEL, buf -> new SwapOffhandC2SPacket(buf));
-        PacketReader.registerServerPacketReader(UseOffhandC2SPacket.CHANNEL, buf -> new UseOffhandC2SPacket(buf));
-        PacketReader.registerClientPacketReader(SyncOffhandS2CPacket.CHANNEL, buf -> new SyncOffhandS2CPacket(buf));
+
+    public static void warnProtocolMismatch(String channel, int protocolVersion) {
+        Offhand.LOGGER.warn(
+            "Protocol mismatch on channel {}: remote={}, local={}",
+            channel,
+            protocolVersion,
+            PROTOCOL_VERSION);
     }
-    
-    public static void sendToServer(moddedmite.rustedironcore.network.Packet packet) {
-        Network.sendToServer(packet);
+
+    public static void init() {
+        PacketReader.registerServerPacketReader(OffhandSwapRequestPacket.CHANNEL, OffhandSwapRequestPacket::new);
+        PacketReader.registerClientPacketReader(OffhandSyncPacket.CHANNEL, OffhandSyncPacket::new);
+        PacketReader.registerClientPacketReader(OffhandAnimationPacket.CHANNEL, OffhandAnimationPacket::new);
+        PacketReader.registerClientPacketReader(OffhandSyncOffhandUse.CHANNEL, OffhandSyncOffhandUse::new);
+        PacketReader.registerClientPacketReader(OffhandCancelUsage.CHANNEL, OffhandCancelUsage::new);
     }
 }

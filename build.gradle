@@ -24,7 +24,6 @@ repositories {
 }
 
 loom {
-    accessWidenerPath = file("src/main/resources/offhand.accesswidener")
     mergedMinecraftJar()
     //latest fishmodloader https://github.com/MinecraftIsTooEasy/FishModLoader/releases/latest
     setFML(new File("libs\\FishModLoader-v${loader_version}.jar"))
@@ -44,6 +43,23 @@ tasks.named('runClient', JavaExec).configure { exec ->
     exec.setArgs(['--user_name', user, '--session', '0', '--width', '854', '--height', '480'])
 }
 
+tasks.register('verifyLibs') {
+    group = 'verification'
+    description = 'Verify required local dependency jars in libs/.'
+    doLast {
+        def required = [
+            "FishModLoader-v${project.loader_version}.jar",
+            "RustedIronCore-${project.rusted_iron_core_version}.jar"
+        ]
+        required.each { jarName ->
+            def jar = file("libs/${jarName}")
+            if (!jar.exists()) {
+                throw new GradleException("Required dependency not found: ${jar}")
+            }
+        }
+    }
+}
+
 dependencies {
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -54,10 +70,6 @@ dependencies {
 
     // Rusted_Iron_Core API. This is technically optional, but you probably want it anyway.
     implementation files("libs\\RustedIronCore-${rusted_iron_core_version}.jar")
-    // ManyLib API. Rapid development of GUI
-    implementation files("libs\\ManyLib-${many_lib}.jar")
-    // ModernMITE API. Add modern version functions
-    implementation files("libs\\ModernMITE-${modern_mite}.jar")
 }
 
 processResources {
@@ -70,6 +82,10 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
     it.options.release = 17
+}
+
+tasks.named('compileJava').configure {
+    dependsOn tasks.named('verifyLibs')
 }
 
 java {
