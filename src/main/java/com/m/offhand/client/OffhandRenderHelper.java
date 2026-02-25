@@ -14,6 +14,7 @@ public final class OffhandRenderHelper {
     
     public static float firstPersonFrame;
     
+    public static final ResourceLocation OFFHAND_WIDGET_TEXTURE = new ResourceLocation(Offhand.MODID, "textures/gui/offhand_widget.png");
     public static final ResourceLocation OFFHAND_SLOT_TEXTURE = new ResourceLocation(Offhand.MODID, "textures/gui/offhand_slot.png");
 
     public static void moveOffHandArm(Entity entity, ModelBiped biped, float frame) {
@@ -131,12 +132,12 @@ public final class OffhandRenderHelper {
     }
 
     public static void drawOffhandSlotBackground(int x, int y) {
-        drawOffhandSlotBackground(x, y, 22);
+        drawOffhandSlotBackground(x, y, 22, OFFHAND_WIDGET_TEXTURE);
     }
 
-    public static void drawOffhandSlotBackground(int x, int y, int size) {
+    public static void drawOffhandSlotBackground(int x, int y, int size, ResourceLocation texture) {
         GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        Minecraft.getMinecraft().getTextureManager().bindTexture(OFFHAND_SLOT_TEXTURE);
+        Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
         Tessellator tessellator = Tessellator.instance;
         tessellator.startDrawingQuads();
         tessellator.addVertexWithUV(x, y + size, 0, 0.0, 1.0);

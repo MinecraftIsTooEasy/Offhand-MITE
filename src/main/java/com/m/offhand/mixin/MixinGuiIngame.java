@@ -39,17 +39,17 @@ public abstract class MixinGuiIngame extends Gui {
         int slotX = width / 2 - 91 - 24;
         int slotY = height - 16 - 6;
 
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        
-        OffhandRenderHelper.drawOffhandSlotBackground(slotX, slotY);
-        
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        RenderHelper.enableGUIStandardItemLighting();
-
         if (offhandStack != null) {
+            GL11.glEnable(GL11.GL_BLEND);
+            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            
+            OffhandRenderHelper.drawOffhandSlotBackground(slotX, slotY);
+            
+            GL11.glDisable(GL11.GL_BLEND);
+            GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+            RenderHelper.enableGUIStandardItemLighting();
+
             float animProgress = offhandStack.animationsToGo - par1;
 
             if (animProgress > 0.0F) {
