@@ -7,13 +7,14 @@ import moddedmite.rustedironcore.network.Network;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.*;
+import org.lwjgl.input.Keyboard;
 
 import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
 public class OffhandKeyHandler implements IKeybindingListener, ITickListener {
 
-    public static final KeyBinding SWAP_KEY = new KeyBinding("副手", 33);
+    public static final KeyBinding SWAP_KEY = new KeyBinding("key.offhand.swap", Keyboard.KEY_F);
 
     private long lastSwapTime = 0;
     private static final long SWAP_COOLDOWN = 300;

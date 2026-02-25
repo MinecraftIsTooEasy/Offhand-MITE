@@ -18,6 +18,6 @@ public abstract class MixinGuiInventory extends GuiContainer {
     @Inject(method = "drawGuiContainerBackgroundLayer", at = @At("TAIL"))
     protected void offhand$drawOffhandSlot(float partialTicks, int mouseX, int mouseY, CallbackInfo ci) {
         // 背包界面副手槽绘制
-        OffhandRenderHelper.drawOffhandSlotBackground(guiLeft + 78, guiTop + 63, 20);
+        OffhandRenderHelper.drawOffhandSlotBackground(guiLeft + 79, guiTop + 64, 18, OffhandRenderHelper.OFFHAND_SLOT_TEXTURE);
     }
 }
