@@ -56,10 +56,12 @@
 - 按最新需求切换为“全局主手 swing 拦截”策略，以压制主副手双动画。
 
 ## 4. 构建与依赖管理
-- 本地依赖要求：
-- `libs/FishModLoader-v${loader_version}.jar`
-- `libs/RustedIronCore-${rusted_iron_core_version}.jar`
-- 已在构建中加入 `verifyLibs` 任务，编译前校验依赖存在性。
+- 依赖获取方式已切换为 Maven 拉取（不再依赖 `libs/` 目录本地 jar）。
+- 主要依赖通过仓库解析：
+- `net.fabricmc:fabric-loader:${loader_version}`
+- `com.github.MinecraftIsTooEasy:FishModLoader:3.4.2`
+- `com.github.MinecraftIsTooEasy:RustedIronCore:1.5.0`
+- 需要确保 `mavenLocal()` 与 `http://maven.limingzxc.top/repository/maven-public/` 可访问。
 
 相关文件：
 - `build.gradle`

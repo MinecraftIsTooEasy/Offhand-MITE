@@ -1,5 +1,9 @@
 pluginManagement {
 	repositories {
+		maven {
+			name = 'ModdedMITE'
+			url = 'https://maven.limingzxc.top/repository/maven-public/'
+		}
 		mavenLocal()
 		maven {
 			name = 'Fabric'
