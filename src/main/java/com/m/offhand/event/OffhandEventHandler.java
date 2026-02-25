@@ -1,6 +1,7 @@
 package com.m.offhand.event;
 
-import com.m.offhand.api.compat.OffhandCompatRegistry;
+import com.m.offhand.api.core.OffhandUtils;
+import com.m.offhand.network.OffhandSyncPacket;
 import moddedmite.rustedironcore.api.event.Handlers;
 import moddedmite.rustedironcore.api.event.events.PlayerLoggedInEvent;
 import moddedmite.rustedironcore.api.event.listener.IPlayerEventListener;
@@ -21,7 +22,7 @@ public class OffhandEventHandler implements IPlayerEventListener {
     private void syncAllPlayersToNewPlayer(ServerPlayer newPlayer) {
         for (Object obj : newPlayer.worldObj.playerEntities) {
             if (obj instanceof EntityPlayer otherPlayer && otherPlayer != newPlayer) {
-                OffhandCompatRegistry.getSyncStrategy().syncOffhandItemToPlayer(newPlayer, otherPlayer);
+                OffhandSyncPacket.sendToClient(newPlayer, otherPlayer);
             }
         }
     }

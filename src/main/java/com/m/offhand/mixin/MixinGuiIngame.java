@@ -1,6 +1,5 @@
 package com.m.offhand.mixin;
 
-import com.m.offhand.api.compat.OffhandCompatRegistry;
 import com.m.offhand.api.core.OffhandUtils;
 import com.m.offhand.client.OffhandRenderHelper;
 import net.minecraft.*;
@@ -28,7 +27,6 @@ public abstract class MixinGuiIngame extends Gui {
     private void offhand$renderOffhandSlot(float par1, boolean par2, int par3, int par4, CallbackInfo ci) {
         if (!this.mc.playerController.shouldDrawHUD()) return;
         if (this.mc.thePlayer == null) return;
-        if (!OffhandCompatRegistry.getRenderPolicy().shouldRenderHotbarOffhand(this.mc.thePlayer)) return;
 
         ItemStack offhandStack = OffhandUtils.getOffhandItem(this.mc.thePlayer);
 

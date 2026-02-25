@@ -9,8 +9,7 @@
     "MixinInventoryPlayer",
     "MixinContainerPlayer",
     "MixinNetServerHandler",
-    "MixinEntityLivingBase",
-    "MixinEntityTrackerEntry"
+    "MixinEntityLivingBase"
   ],
   "client": [
     "MixinItemRenderer",
