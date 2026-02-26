@@ -27,6 +27,6 @@
     "homepage": "https://minecraftistooeasy.github.io/",
     "sources": "https://github.com/MinecraftIsTooEasy/Offhand-MITE"
   },
-  "license": "CC0-1.0",
+  "license": "MIT",
   "accessWidener": "offhand.accesswidener"
 }
