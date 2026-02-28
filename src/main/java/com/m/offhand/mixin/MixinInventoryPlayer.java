@@ -3,6 +3,7 @@ package com.m.offhand.mixin;
 import com.m.offhand.api.core.IOffhandInventory;
 import net.minecraft.EntityPlayer;
 import net.minecraft.InventoryPlayer;
+import net.minecraft.Item;
 import net.minecraft.ItemArrow;
 import net.minecraft.ItemStack;
 import net.minecraft.NBTTagCompound;
@@ -102,6 +103,26 @@ public abstract class MixinInventoryPlayer implements IOffhandInventory {
         int current = this.player.inventory.currentItem;
         if (current == this.offhand$offhandSlot && current >= 0 && current < this.mainInventory.length) {
             cir.setReturnValue(this.mainInventory[current]);
+        }
+    }
+
+    @Inject(
+        method = "getNextHotbarOrInventorySlotContainingMostSimilarItem",
+        at = @At("RETURN"),
+        cancellable = true)
+    private void offhand$excludeOffhandFromAutoRestock(
+        Item item,
+        int itemSubtype,
+        int hotbarSlotIndex,
+        CallbackInfoReturnable<Integer> cir) {
+        Integer slot = cir.getReturnValue();
+        if (slot == null) {
+            return;
+        }
+
+        if (slot.intValue() == this.offhand$offhandSlot) {
+            // Keep offhand slot isolated so vanilla auto-restock never pulls it into mainhand.
+            cir.setReturnValue(Integer.valueOf(-1));
         }
     }
 

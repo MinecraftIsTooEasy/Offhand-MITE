@@ -16,8 +16,7 @@ public class OffhandKeyHandler implements IKeybindingListener, ITickListener {
 
     public static final KeyBinding SWAP_KEY = new KeyBinding("key.offhand.swap", Keyboard.KEY_F);
 
-    private long lastSwapTime = 0;
-    private static final long SWAP_COOLDOWN = 300;
+    private boolean swapKeyDownLastTick = false;
 
     @Override
     public void onKeybindingRegister(Consumer<KeyBinding> registry) {
@@ -26,15 +25,16 @@ public class OffhandKeyHandler implements IKeybindingListener, ITickListener {
 
     @Override
     public void onClientTick(Minecraft client) {
-        if (client.thePlayer == null) return;
-        
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastSwapTime < SWAP_COOLDOWN) return;
-        
-        if (SWAP_KEY.isPressed()) {
-            lastSwapTime = currentTime;
+        if (client.thePlayer == null) {
+            this.swapKeyDownLastTick = false;
+            return;
+        }
+
+        boolean isSwapKeyDown = Keyboard.isKeyDown(SWAP_KEY.keyCode);
+        if (isSwapKeyDown && !this.swapKeyDownLastTick) {
             requestSwap();
         }
+        this.swapKeyDownLastTick = isSwapKeyDown;
     }
 
     private void requestSwap() {
