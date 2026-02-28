@@ -17,4 +17,10 @@ public interface IOffhandPlayer {
     void setMainhandSlot(int slot);
 
     ItemStack getMainhandItem();
+
+    boolean isOffhandBlocking();
+
+    ItemStack getOffhandItemInUse();
+
+    int getOffhandItemInUseCount();
 }

@@ -8,6 +8,7 @@ import net.minecraft.EntityClientPlayerMP;
 import net.minecraft.EntityPlayer;
 import net.minecraft.GuiScreen;
 import net.minecraft.Item;
+import net.minecraft.ItemBow;
 import net.minecraft.ItemBlock;
 import net.minecraft.ItemHoe;
 import net.minecraft.ItemStack;
@@ -92,7 +93,10 @@ public abstract class MixinMinecraft {
 
         // Mainhand has an explicit usable item: do not auto-trigger offhand to avoid double use.
         // We only yield to offhand when mainhand is a "utility/attack hand" item.
-        if (mainItem instanceof ItemTool || mainItem instanceof ItemSword || mainItem instanceof ItemHoe) {
+        if (mainItem instanceof ItemTool
+            || mainItem instanceof ItemSword
+            || mainItem instanceof ItemHoe
+            || mainItem instanceof ItemBow) {
             return true;
         }
 

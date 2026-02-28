@@ -9,6 +9,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -32,7 +33,9 @@ public class MixinRenderPlayer {
         }
 
         ItemStack offhand = OffhandUtils.getOffhandItem(par1AbstractClientPlayer);
-        if (offhand == null) return;
+        if (!offhand$hasRenderableStack(offhand)) {
+            return;
+        }
 
         GL11.glPushMatrix();
 
@@ -50,14 +53,20 @@ public class MixinRenderPlayer {
     @Inject(method = "renderSpecials", at = @At(value = "HEAD"))
     private void offhand$setLeftHandItem(AbstractClientPlayer par1AbstractClientPlayer, float par2, CallbackInfo ci) {
         if (!OffhandCompatRegistry.getRenderPolicy().shouldRenderThirdPersonOffhand(par1AbstractClientPlayer)) {
+            this.modelArmorChestplate.heldItemLeft = this.modelArmor.heldItemLeft = this.modelBipedMain.heldItemLeft = 0;
             return;
         }
 
         ItemStack offhand = OffhandUtils.getOffhandItem(par1AbstractClientPlayer);
-        if (offhand != null) {
-            if (this.modelBipedMain.heldItemLeft < 1) {
-                this.modelArmorChestplate.heldItemLeft = this.modelArmor.heldItemLeft = this.modelBipedMain.heldItemLeft = 1;
-            }
+        if (offhand$hasRenderableStack(offhand)) {
+            this.modelArmorChestplate.heldItemLeft = this.modelArmor.heldItemLeft = this.modelBipedMain.heldItemLeft = 1;
+        } else {
+            this.modelArmorChestplate.heldItemLeft = this.modelArmor.heldItemLeft = this.modelBipedMain.heldItemLeft = 0;
         }
+    }
+
+    @Unique
+    private static boolean offhand$hasRenderableStack(ItemStack stack) {
+        return stack != null && stack.stackSize > 0 && stack.getItem() != null;
     }
 }

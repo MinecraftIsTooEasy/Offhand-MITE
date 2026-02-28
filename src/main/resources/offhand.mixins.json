@@ -5,6 +5,7 @@
   "target": "DEFAULT",
   "mixins": [
     "MixinContainerPlayer",
+    "MixinDamage",
     "MixinEntityLivingBase",
     "MixinEntityPlayer",
     "MixinEntityTrackerEntry",
