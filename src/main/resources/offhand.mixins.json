@@ -16,6 +16,7 @@
   ],
   "client": [
     "MixinEntityRenderer",
+    "MixinGuiContainer",
     "MixinGuiIngame",
     "MixinGuiInventory",
     "MixinItemRenderer",

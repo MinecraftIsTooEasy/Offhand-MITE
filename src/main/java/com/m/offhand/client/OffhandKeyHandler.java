@@ -31,6 +31,12 @@ public class OffhandKeyHandler implements IKeybindingListener, ITickListener {
         }
 
         boolean isSwapKeyDown = Keyboard.isKeyDown(SWAP_KEY.keyCode);
+        if (client.currentScreen != null) {
+            // GUI 内由 GuiContainer 的按键处理执行槽位交换，避免与全局换手逻辑重复触发。
+            this.swapKeyDownLastTick = isSwapKeyDown;
+            return;
+        }
+
         if (isSwapKeyDown && !this.swapKeyDownLastTick) {
             requestSwap();
         }
