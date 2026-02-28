@@ -25,7 +25,6 @@ public abstract class MixinGuiIngame extends Gui {
 
     @Inject(method = "renderGameOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/RenderHelper;disableStandardItemLighting()V", shift = At.Shift.BEFORE))
     private void offhand$renderOffhandSlot(float par1, boolean par2, int par3, int par4, CallbackInfo ci) {
-        if (!this.mc.playerController.shouldDrawHUD()) return;
         if (this.mc.thePlayer == null) return;
 
         ItemStack offhandStack = OffhandUtils.getOffhandItem(this.mc.thePlayer);

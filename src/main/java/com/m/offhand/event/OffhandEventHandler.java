@@ -1,6 +1,5 @@
 package com.m.offhand.event;
 
-import com.m.offhand.api.core.OffhandUtils;
 import com.m.offhand.network.OffhandSyncPacket;
 import moddedmite.rustedironcore.api.event.Handlers;
 import moddedmite.rustedironcore.api.event.events.PlayerLoggedInEvent;

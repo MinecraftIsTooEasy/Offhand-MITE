@@ -4,8 +4,10 @@ import com.m.offhand.api.compat.OffhandCompatRegistry;
 import com.m.offhand.api.core.IOffhandInventory;
 import com.m.offhand.api.core.IOffhandPlayer;
 import com.m.offhand.api.core.OffhandUtils;
+import net.minecraft.DamageSource;
 import net.minecraft.EntityPlayer;
 import net.minecraft.InventoryPlayer;
+import net.minecraft.ItemDamageResult;
 import net.minecraft.ItemStack;
 import net.minecraft.Potion;
 import net.minecraft.PotionEffect;
@@ -157,6 +159,20 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
         }
     }
 
+    @Inject(method = "getItemInUseCount", at = @At("HEAD"), cancellable = true)
+    private void offhand$suppressMainhandUseAnimationDuringOffhandRender(CallbackInfoReturnable<Integer> cir) {
+        if (!OffhandUtils.isClientOffhandRenderContext()) {
+            return;
+        }
+
+        // First-person offhand render mirrors current slot for drawing.
+        // If only mainhand is using food/drink, do not reuse mainhand use-count
+        // for offhand transforms, otherwise both hands show ingestion animation.
+        if (!this.offhand$isOffhandItemInUse) {
+            cir.setReturnValue(0);
+        }
+    }
+
     @Inject(method = "setHeldItemStack", at = @At("HEAD"), cancellable = true)
     private void offhand$setHeldItemStackToOffhandWhenUsing(ItemStack stack, CallbackInfo ci) {
         if (!this.offhand$isOffhandItemInUse) {
@@ -191,6 +207,41 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
             player.inventory.currentItem = oldSlot;
         }
         ci.cancel();
+    }
+
+    @Inject(method = "tryDamageHeldItem", at = @At("HEAD"), cancellable = true)
+    private void offhand$tryDamageOffhandHeldItem(DamageSource damageSource, int amount, CallbackInfoReturnable<ItemDamageResult> cir) {
+        if (!this.offhand$isOffhandItemInUse) {
+            return;
+        }
+
+        EntityPlayer player = (EntityPlayer) (Object) this;
+        int offhandSlot = ((IOffhandInventory) player.inventory).getOffhandSlot();
+        if (offhandSlot < 0 || offhandSlot >= player.inventory.mainInventory.length) {
+            return;
+        }
+
+        if (player.inCreativeMode()) {
+            cir.setReturnValue(null);
+            return;
+        }
+
+        ItemStack offhandStack = player.inventory.mainInventory[offhandSlot];
+        if (offhandStack == null) {
+            cir.setReturnValue(null);
+            return;
+        }
+
+        int oldSlot = player.inventory.currentItem;
+        ItemDamageResult result;
+        try {
+            player.inventory.currentItem = offhandSlot;
+            result = offhandStack.tryDamageItem(damageSource, amount, player);
+        } finally {
+            player.inventory.currentItem = oldSlot;
+        }
+
+        cir.setReturnValue(result);
     }
 
     @Redirect(
