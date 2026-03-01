@@ -8,6 +8,8 @@
 
 * 修复“副手食物结算时服务端崩溃（`InventoryPlayer.convertOneItem` 空指针）”问题。  
   原因是副手使用收尾阶段 `convertOneOfHeldItem/setHeldItemStack` 的路由条件过窄，部分情况下回落到主手路径并传入空栈。现已改为基于副手使用上下文进行兜底路由，统一写回副手槽并保留空栈保护。
+* 修复打开创造模式物品栏崩溃问题
+* 新增IOffhandActionFilter接口方便其他MOD进行兼容，用法是 OffhandCompatRegistry.setActionFilter(new IOffhandActionFilter()，然后进行覆盖相关行为
 
 ---
 

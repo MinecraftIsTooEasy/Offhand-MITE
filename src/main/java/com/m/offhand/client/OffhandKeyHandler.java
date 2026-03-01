@@ -1,5 +1,7 @@
 package com.m.offhand.client;
 
+import com.m.offhand.api.compat.OffhandCompatRegistry;
+import com.m.offhand.api.core.OffhandUtils;
 import com.m.offhand.network.OffhandSwapRequestPacket;
 import moddedmite.rustedironcore.api.event.listener.IKeybindingListener;
 import moddedmite.rustedironcore.api.event.listener.ITickListener;
@@ -38,7 +40,12 @@ public class OffhandKeyHandler implements IKeybindingListener, ITickListener {
         }
 
         if (isSwapKeyDown && !this.swapKeyDownLastTick) {
-            requestSwap();
+            if (!OffhandCompatRegistry.getActionFilter().cancelOffhandSwapKey(
+                    client.thePlayer,
+                    client.thePlayer.inventory.getCurrentItemStack(),
+                    OffhandUtils.getOffhandItem(client.thePlayer))) {
+                requestSwap();
+            }
         }
         this.swapKeyDownLastTick = isSwapKeyDown;
     }

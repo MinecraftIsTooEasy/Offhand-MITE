@@ -18,6 +18,9 @@ public final class OffhandCompatRegistry {
 
     private static IOffhandSyncStrategy syncStrategy = new DefaultSyncStrategy();
 
+    private static IOffhandActionFilter actionFilter = new IOffhandActionFilter() {
+    };
+
     private OffhandCompatRegistry() {
     }
 
@@ -45,6 +48,15 @@ public final class OffhandCompatRegistry {
 
     public static void setSyncStrategy(IOffhandSyncStrategy strategy) {
         syncStrategy = strategy == null ? new DefaultSyncStrategy() : strategy;
+    }
+
+    public static IOffhandActionFilter getActionFilter() {
+        return actionFilter;
+    }
+
+    public static void setActionFilter(IOffhandActionFilter filter) {
+        actionFilter = filter == null ? new IOffhandActionFilter() {
+        } : filter;
     }
 
     private static final class DefaultSyncStrategy implements IOffhandSyncStrategy {

@@ -125,6 +125,14 @@ public abstract class MixinMinecraft {
 
     @Unique
     private boolean offhand$tryUseOffhandRightClick() {
+        ItemStack mainhandStack = this.thePlayer.inventory.getCurrentItemStack();
+        ItemStack offhandStack = OffhandUtils.getOffhandItem(this.thePlayer);
+
+        if (OffhandCompatRegistry.getActionFilter().cancelOffhandRightClick(
+                this.thePlayer, mainhandStack, offhandStack)) {
+            return false;
+        }
+
         int oldSlot = this.thePlayer.inventory.currentItem;
         int offhandSlot = OffhandUtils.getOffhandSlot(this.thePlayer);
         if (offhandSlot < 0 || offhandSlot >= this.thePlayer.inventory.mainInventory.length) {

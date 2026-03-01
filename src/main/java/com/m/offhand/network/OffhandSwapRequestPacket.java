@@ -1,6 +1,8 @@
 package com.m.offhand.network;
 
 import com.m.offhand.Offhand;
+import com.m.offhand.api.compat.OffhandCompatRegistry;
+import com.m.offhand.api.core.OffhandUtils;
 import moddedmite.rustedironcore.network.Packet;
 import moddedmite.rustedironcore.network.PacketByteBuf;
 import net.minecraft.EntityPlayer;
@@ -37,6 +39,14 @@ public class OffhandSwapRequestPacket implements Packet {
         if (entityPlayer == null || entityPlayer.worldObj == null || entityPlayer.worldObj.isRemote) {
             return;
         }
+
+        if (OffhandCompatRegistry.getActionFilter().cancelOffhandSwapPacket(
+                entityPlayer,
+                entityPlayer.inventory.getCurrentItemStack(),
+                OffhandUtils.getOffhandItem(entityPlayer))) {
+            return;
+        }
+
         Offhand.swapOffhand(entityPlayer);
     }
 
