@@ -1,5 +1,16 @@
 # Offhand-MITE
 
+---
+
+## 3.0.2
+
+### 修复
+
+* 修复“副手食物结算时服务端崩溃（`InventoryPlayer.convertOneItem` 空指针）”问题。  
+  原因是副手使用收尾阶段 `convertOneOfHeldItem/setHeldItemStack` 的路由条件过窄，部分情况下回落到主手路径并传入空栈。现已改为基于副手使用上下文进行兜底路由，统一写回副手槽并保留空栈保护。
+
+---
+
 ## 3.0.1
 
 ### 新增

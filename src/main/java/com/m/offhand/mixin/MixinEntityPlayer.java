@@ -365,10 +365,6 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
 
     @Inject(method = "setHeldItemStack", at = @At("HEAD"), cancellable = true)
     private void offhand$setHeldItemStackToOffhandWhenUsing(ItemStack stack, CallbackInfo ci) {
-        if (!this.offhand$isOffhandItemInUse) {
-            return;
-        }
-
         EntityPlayer player = (EntityPlayer) (Object) this;
         int offhandSlot = ((IOffhandInventory) player.inventory).getOffhandSlot();
         if (offhandSlot < 0 || offhandSlot >= player.inventory.mainInventory.length) {
@@ -376,22 +372,16 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
         }
 
         ItemStack offhandStack = player.inventory.mainInventory[offhandSlot];
-        if (player.inventory.currentItem != offhandSlot) {
+        if (!this.offhand$shouldRouteHeldItemMutationToOffhand(player, offhandSlot, offhandStack)) {
             return;
         }
 
-        if (offhandSlot >= 0 && offhandSlot < player.inventory.mainInventory.length) {
-            player.inventory.setInventorySlotContents(offhandSlot, stack);
-            ci.cancel();
-        }
+        player.inventory.setInventorySlotContents(offhandSlot, stack);
+        ci.cancel();
     }
 
     @Inject(method = "convertOneOfHeldItem", at = @At("HEAD"), cancellable = true)
     private void offhand$convertOneOfOffhandItem(ItemStack createdItemStack, CallbackInfo ci) {
-        if (!this.offhand$isOffhandItemInUse) {
-            return;
-        }
-
         EntityPlayer player = (EntityPlayer) (Object) this;
         int offhandSlot = ((IOffhandInventory) player.inventory).getOffhandSlot();
         if (offhandSlot < 0 || offhandSlot >= player.inventory.mainInventory.length) {
@@ -399,7 +389,7 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
         }
 
         ItemStack offhandStack = player.inventory.mainInventory[offhandSlot];
-        if (player.inventory.currentItem != offhandSlot) {
+        if (!this.offhand$shouldRouteHeldItemMutationToOffhand(player, offhandSlot, offhandStack)) {
             return;
         }
 
@@ -420,6 +410,29 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
             player.inventory.currentItem = oldSlot;
         }
         ci.cancel();
+    }
+
+    @Unique
+    private boolean offhand$shouldRouteHeldItemMutationToOffhand(EntityPlayer player, int offhandSlot, ItemStack offhandStack) {
+        if (offhandSlot < 0 || offhandSlot >= player.inventory.mainInventory.length) {
+            return false;
+        }
+
+        if (player.inventory.currentItem == offhandSlot) {
+            return true;
+        }
+
+        if (this.offhand$isOffhandItemInUse) {
+            return true;
+        }
+
+        if (this.offhand$itemInUse != null) {
+            if (offhandStack == this.offhand$itemInUse || this.itemInUse == this.offhand$itemInUse) {
+                return true;
+            }
+        }
+
+        return this.itemInUse != null && offhandStack == this.itemInUse;
     }
 
     @Inject(method = "tryDamageHeldItem", at = @At("HEAD"), cancellable = true)
