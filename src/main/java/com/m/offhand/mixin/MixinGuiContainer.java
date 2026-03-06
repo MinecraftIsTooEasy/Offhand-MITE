@@ -72,25 +72,34 @@ public abstract class MixinGuiContainer {
         }
 
         ItemStack hoveredStack = this.theSlot.getStack();
-        if (hoveredStack == null || hoveredStack.stackSize <= 0) {
-            ci.cancel();
-            return;
-        }
-
-        if (!offhandSlot.isItemValid(hoveredStack) || !this.theSlot.canTakeStack(player)) {
-            ci.cancel();
-            return;
-        }
-
         ItemStack offhandStack = offhandSlot.getStack();
-        if (offhandStack != null && !this.theSlot.isItemValid(offhandStack)) {
+        boolean hoveredHasItem = hoveredStack != null && hoveredStack.stackSize > 0;
+        boolean offhandHasItem = offhandStack != null && offhandStack.stackSize > 0;
+
+        if (!hoveredHasItem && !offhandHasItem) {
             ci.cancel();
             return;
+        }
+
+        if (hoveredHasItem) {
+            if (!offhandSlot.isItemValid(hoveredStack) || !this.theSlot.canTakeStack(player)) {
+                ci.cancel();
+                return;
+            }
+        }
+
+        if (offhandHasItem) {
+            if (!this.theSlot.isItemValid(offhandStack) || !offhandSlot.canTakeStack(player)) {
+                ci.cancel();
+                return;
+            }
         }
 
         this.handleMouseClick(offhandSlot, offhandSlot.slotNumber, 0, 0);
         this.handleMouseClick(this.theSlot, this.theSlot.slotNumber, 0, 0);
-        this.handleMouseClick(offhandSlot, offhandSlot.slotNumber, 0, 0);
+        if (player.inventory.getItemStack() != null) {
+            this.handleMouseClick(offhandSlot, offhandSlot.slotNumber, 0, 0);
+        }
         ci.cancel();
     }
 

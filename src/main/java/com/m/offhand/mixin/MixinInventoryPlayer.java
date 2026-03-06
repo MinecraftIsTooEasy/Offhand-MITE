@@ -1,5 +1,6 @@
 package com.m.offhand.mixin;
 
+import com.m.offhand.OffhandConfig;
 import com.m.offhand.api.core.IOffhandInventory;
 import net.minecraft.EntityPlayer;
 import net.minecraft.InventoryPlayer;
@@ -124,6 +125,57 @@ public abstract class MixinInventoryPlayer implements IOffhandInventory {
             // Keep offhand slot isolated so vanilla auto-restock never pulls it into mainhand.
             cir.setReturnValue(Integer.valueOf(-1));
         }
+    }
+
+    @Inject(method = "getFirstEmptyStack", at = @At("RETURN"), cancellable = true)
+    private void offhand$excludeOffhandFromFirstEmptyStack(CallbackInfoReturnable<Integer> cir) {
+        if (OffhandConfig.offhandPickup) {
+            return;
+        }
+
+        Integer slot = cir.getReturnValue();
+        if (slot != null && slot.intValue() == this.offhand$offhandSlot) {
+            // Do not let offhand behave like a regular free inventory slot during auto-pickup.
+            cir.setReturnValue(Integer.valueOf(-1));
+        }
+    }
+
+    @Inject(method = "storeItemStack", at = @At("RETURN"), cancellable = true)
+    private void offhand$excludeOffhandFromStoreItemStack(ItemStack stack, CallbackInfoReturnable<Integer> cir) {
+        if (OffhandConfig.offhandPickup) {
+            return;
+        }
+
+        Integer slot = cir.getReturnValue();
+        if (slot != null && slot.intValue() == this.offhand$offhandSlot) {
+            // Prevent merge-into-offhand during inventory pickup path.
+            cir.setReturnValue(Integer.valueOf(-1));
+        }
+    }
+
+    @Inject(method = "hasEmptyMainInventorySlot", at = @At("RETURN"), cancellable = true)
+    private void offhand$excludeOffhandFromHasEmptyMainInventorySlot(CallbackInfoReturnable<Boolean> cir) {
+        if (OffhandConfig.offhandPickup || !cir.getReturnValue()) {
+            return;
+        }
+
+        if (this.offhand$offhandSlot < 0
+            || this.offhand$offhandSlot >= this.mainInventory.length
+            || this.mainInventory[this.offhand$offhandSlot] != null) {
+            return;
+        }
+
+        for (int i = 0; i < this.mainInventory.length; ++i) {
+            if (i == this.offhand$offhandSlot) {
+                continue;
+            }
+            if (this.mainInventory[i] == null) {
+                return;
+            }
+        }
+
+        // Only offhand is empty: main inventory should still be treated as full.
+        cir.setReturnValue(Boolean.FALSE);
     }
 
     @Override
