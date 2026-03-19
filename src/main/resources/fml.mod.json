@@ -10,8 +10,9 @@
   },
   "environment": "*",
   "name": "Offhand-MITE",
-  "description": "添加高版本副手系统到MITE",
+  "description": "Add Offhand",
   "authors": [
+    "LouisXIV",
     "M"
   ],
   "entrypoints": {
