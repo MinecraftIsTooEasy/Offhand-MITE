@@ -33,8 +33,9 @@ public class OffhandKeyHandler implements IKeybindingListener, ITickListener {
         }
 
         boolean isSwapKeyDown = Keyboard.isKeyDown(SWAP_KEY.keyCode);
-        if (client.currentScreen != null) {
-            // GUI 内由 GuiContainer 的按键处理执行槽位交换，避免与全局换手逻辑重复触发。
+        if (client.currentScreen != null || client.imposed_gui_chat != null) {
+            // GUI 内由 GuiContainer 的按键处理执行槽位交换。
+            // Imposed chat can be active while currentScreen is still null, so block swap there too.
             this.swapKeyDownLastTick = isSwapKeyDown;
             return;
         }

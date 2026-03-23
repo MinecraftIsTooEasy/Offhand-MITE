@@ -11,8 +11,7 @@
     "MixinEntityTrackerEntry",
     "MixinGuiContainerCreative",
     "MixinInventoryPlayer",
-    "MixinNetServerHandler",
-    "font.MixinFontRenderer"
+    "MixinNetServerHandler"
   ],
   "client": [
     "MixinEntityRenderer",
