@@ -30,10 +30,11 @@ public class MixinEntityLivingBase {
         EntityPlayer player = (EntityPlayer) self;
         IOffhandPlayer offhandPlayer = (IOffhandPlayer) player;
         int offhandSlot = ((IOffhandInventory) player.inventory).getOffhandSlot();
+        boolean hasActiveOffhandUse = offhandPlayer.getOffhandItemInUse() != null;
 
         // Global interception mode: when offhand right-click/use is active, block mainhand swing.
         if (OffhandUtils.isClientOffhandUseContext()
-            || (offhandPlayer.isOffhandItemInUse() && player.inventory.currentItem != offhandSlot)
+            || (hasActiveOffhandUse && player.inventory.currentItem != offhandSlot)
             || OffhandUtils.shouldSuppressClientMainhandRender(player)) {
             ci.cancel();
         }

@@ -92,6 +92,25 @@ public abstract class MixinInventoryPlayer implements IOffhandInventory {
         ItemStack offhandStack = this.getOffhandItem();
         if (offhandStack != null && offhandStack.getItem() instanceof ItemArrow && offhandStack.stackSize > 0) {
             cir.setReturnValue(this.offhand$offhandSlot);
+            return;
+        }
+
+        if (this.mainInventory == null) {
+            return;
+        }
+
+        // Vanilla only scans hotbar; include main inventory so bows can fire with backpack arrows.
+        int hotbarSize = InventoryPlayer.getHotbarSize();
+        for (int slot = hotbarSize; slot < this.mainInventory.length; ++slot) {
+            if (slot == this.offhand$offhandSlot) {
+                continue;
+            }
+
+            ItemStack stack = this.mainInventory[slot];
+            if (stack != null && stack.getItem() instanceof ItemArrow && stack.stackSize > 0) {
+                cir.setReturnValue(slot);
+                return;
+            }
         }
     }
 

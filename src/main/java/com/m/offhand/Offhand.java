@@ -50,6 +50,16 @@ public class Offhand implements ModInitializer {
     public static void swapOffhand(EntityPlayer player) {
         if (player == null) return;
         
+        int currentSlot = player.inventory.currentItem;
+        int offhandSlot = OffhandUtils.getOffhandSlot(player);
+        if (offhandSlot < 0
+            || offhandSlot >= player.inventory.mainInventory.length
+            || currentSlot < 0
+            || currentSlot >= player.inventory.mainInventory.length
+            || currentSlot == offhandSlot) {
+            return;
+        }
+
         ItemStack mainhandItem = player.inventory.getCurrentItemStack();
         ItemStack offhandItem = OffhandUtils.getOffhandItem(player);
         
@@ -57,8 +67,8 @@ public class Offhand implements ModInitializer {
             return;
         }
         
-        OffhandUtils.setPlayerOffhandItem(player, mainhandItem);
-        player.inventory.mainInventory[player.inventory.currentItem] = offhandItem;
+        player.inventory.setInventorySlotContents(offhandSlot, mainhandItem);
+        player.inventory.setInventorySlotContents(currentSlot, offhandItem);
         
         if (player.inventoryContainer != null) {
             player.inventoryContainer.onCraftMatrixChanged(player.inventory);

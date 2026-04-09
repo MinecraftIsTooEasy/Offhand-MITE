@@ -127,6 +127,27 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
                 }
             }
         }
+
+        if (this.offhand$isOffhandItemInUse) {
+            int offhandSlot = ((IOffhandInventory) player.inventory).getOffhandSlot();
+            ItemStack offhandStack =
+                (offhandSlot >= 0 && offhandSlot < player.inventory.mainInventory.length)
+                    ? player.inventory.mainInventory[offhandSlot]
+                    : null;
+
+            boolean hasSecondaryOffhandUse =
+                this.offhand$itemInUse != null
+                    && this.offhand$itemInUseCount > 0
+                    && this.offhand$itemInUse == offhandStack;
+            boolean hasPrimaryOffhandUse = this.itemInUse != null && this.itemInUse == offhandStack;
+
+            if (!hasSecondaryOffhandUse && !hasPrimaryOffhandUse && player.inventory.currentItem != offhandSlot) {
+                this.offhand$isOffhandItemInUse = false;
+                if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
+                    OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, false);
+                }
+            }
+        }
     }
 
     @Override
@@ -266,8 +287,8 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
 
         this.offhand$isOffhandItemInUse = usingOffhand;
 
-        if (usingOffhand && !player.worldObj.isRemote && player instanceof ServerPlayer) {
-            OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, true);
+        if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
+            OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, usingOffhand);
         }
     }
 
@@ -316,6 +337,12 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
         if (offhandStack == null || offhandStack != this.offhand$itemInUse || offhandStack.stackSize <= 0) {
             this.offhand$itemInUse = null;
             this.offhand$itemInUseCount = 0;
+            if (this.offhand$isOffhandItemInUse) {
+                this.offhand$isOffhandItemInUse = false;
+                if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
+                    OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, false);
+                }
+            }
             return;
         }
 
@@ -418,21 +445,9 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
             return false;
         }
 
-        if (player.inventory.currentItem == offhandSlot) {
-            return true;
-        }
-
-        if (this.offhand$isOffhandItemInUse) {
-            return true;
-        }
-
-        if (this.offhand$itemInUse != null) {
-            if (offhandStack == this.offhand$itemInUse || this.itemInUse == this.offhand$itemInUse) {
-                return true;
-            }
-        }
-
-        return this.itemInUse != null && offhandStack == this.itemInUse;
+        // Route held-item mutations only while offhand slot is explicitly selected in our scoped context.
+        // Keep this true even when offhand stack just became null so convertOneOfHeldItem can apply its null-guard path.
+        return player.inventory.currentItem == offhandSlot;
     }
 
     @Inject(method = "tryDamageHeldItem", at = @At("HEAD"), cancellable = true)
@@ -458,7 +473,13 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
             return;
         }
 
-        if (player.inventory.currentItem != offhandSlot) {
+        boolean hasPrimaryOffhandUse = this.itemInUse != null && this.itemInUse == offhandStack;
+        boolean hasSecondaryOffhandUse =
+            this.offhand$itemInUse != null
+                && this.offhand$itemInUseCount > 0
+                && this.offhand$itemInUse == offhandStack;
+
+        if (!hasPrimaryOffhandUse && !hasSecondaryOffhandUse) {
             return;
         }
 

@@ -96,7 +96,8 @@ public abstract class MixinMinecraft {
         if (mainItem instanceof ItemTool
             || mainItem instanceof ItemSword
             || mainItem instanceof ItemHoe
-            || mainItem instanceof ItemBow) {
+            || mainItem instanceof ItemBow
+            || mainItem == Item.compass) {
             return true;
         }
 
