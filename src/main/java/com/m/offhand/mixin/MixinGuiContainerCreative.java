@@ -4,6 +4,7 @@ import com.m.offhand.api.core.OffhandUtils;
 import com.m.offhand.client.OffhandRenderHelper;
 import net.minecraft.Container;
 import net.minecraft.CreativeTabs;
+import net.minecraft.EntityPlayer;
 import net.minecraft.GuiContainerCreative;
 import net.minecraft.InventoryEffectRenderer;
 import net.minecraft.Minecraft;
@@ -34,7 +35,13 @@ public abstract class MixinGuiContainerCreative extends InventoryEffectRenderer 
 	@Inject(method = "drawGuiContainerBackgroundLayer", at = @At("TAIL"))
 	protected void offhand$drawOffhandSlot(float partialTicks, int mouseX, int mouseY, CallbackInfo ci) {
 		if (selectedTabIndex == CreativeTabs.tabInventory.getTabIndex()) {
-			OffhandRenderHelper.drawOffhandSlotBackground(guiLeft + OFFHAND_BG_X, guiTop + OFFHAND_BG_Y, 18, OffhandRenderHelper.OFFHAND_SLOT_TEXTURE);
+            Minecraft mc = Minecraft.getMinecraft();
+            EntityPlayer player = mc == null ? null : mc.thePlayer;
+			OffhandRenderHelper.drawOffhandSlotBackground(
+				guiLeft + OFFHAND_BG_X,
+				guiTop + OFFHAND_BG_Y,
+				18,
+				OffhandRenderHelper.getInventoryOffhandSlotTexture(player));
 		}
 	}
 

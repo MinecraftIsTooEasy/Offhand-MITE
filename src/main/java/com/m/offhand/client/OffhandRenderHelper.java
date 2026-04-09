@@ -16,6 +16,7 @@ public final class OffhandRenderHelper {
     
     public static final ResourceLocation OFFHAND_WIDGET_TEXTURE = new ResourceLocation(Offhand.MODID, "textures/gui/offhand_widget.png");
     public static final ResourceLocation OFFHAND_SLOT_TEXTURE = new ResourceLocation(Offhand.MODID, "textures/gui/offhand_slot.png");
+    public static final ResourceLocation OFFHAND_SLOT_FILLED_TEXTURE = new ResourceLocation(Offhand.MODID, "textures/gui/offhand_slot_1.png");
 
     public static void moveOffHandArm(Entity entity, ModelBiped biped, float frame) {
         if (entity instanceof EntityPlayer) {
@@ -145,6 +146,19 @@ public final class OffhandRenderHelper {
         tessellator.addVertexWithUV(x + size, y, 0, 1.0, 0.0);
         tessellator.addVertexWithUV(x, y, 0, 0.0, 0.0);
         tessellator.draw();
+    }
+
+    public static ResourceLocation getInventoryOffhandSlotTexture(EntityPlayer player) {
+        if (player == null) {
+            return OFFHAND_SLOT_TEXTURE;
+        }
+
+        ItemStack offhandStack = OffhandUtils.getOffhandItem(player);
+        if (offhandStack != null && offhandStack.stackSize > 0 && offhandStack.getItem() != null) {
+            return OFFHAND_SLOT_FILLED_TEXTURE;
+        }
+
+        return OFFHAND_SLOT_TEXTURE;
     }
 
     public static boolean usesBothHands(ItemStack stack) {

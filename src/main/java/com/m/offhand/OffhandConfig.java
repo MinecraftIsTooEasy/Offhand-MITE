@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import net.minecraft.ItemStack;
 
 import java.io.IOException;
@@ -117,7 +116,7 @@ public class OffhandConfig {
         }
 
         try (Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
-            JsonElement rootElement = JsonParser.parseReader(reader);
+            JsonElement rootElement = GSON.fromJson(reader, JsonElement.class);
             if (rootElement == null || !rootElement.isJsonObject()) {
                 return null;
             }

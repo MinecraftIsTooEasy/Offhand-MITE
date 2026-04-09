@@ -5,6 +5,8 @@ build/
 out/
 classes/
 package/
+.gradle-user/
+images/
 
 # eclipse
 

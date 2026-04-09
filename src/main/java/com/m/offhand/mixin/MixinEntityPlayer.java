@@ -452,10 +452,6 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
 
     @Inject(method = "tryDamageHeldItem", at = @At("HEAD"), cancellable = true)
     private void offhand$tryDamageOffhandHeldItem(DamageSource damageSource, int amount, CallbackInfoReturnable<ItemDamageResult> cir) {
-        if (!this.offhand$isOffhandItemInUse) {
-            return;
-        }
-
         EntityPlayer player = (EntityPlayer) (Object) this;
         int offhandSlot = ((IOffhandInventory) player.inventory).getOffhandSlot();
         if (offhandSlot < 0 || offhandSlot >= player.inventory.mainInventory.length) {

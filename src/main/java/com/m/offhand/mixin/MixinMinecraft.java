@@ -57,7 +57,7 @@ public abstract class MixinMinecraft {
             return;
         }
 
-        if (!this.offhand$shouldTryOffhand(mainhandStack)) {
+        if (!this.offhand$shouldTryOffhand(mainhandStack, offhandStack)) {
             return;
         }
 
@@ -81,7 +81,12 @@ public abstract class MixinMinecraft {
     }
 
     @Unique
-    private boolean offhand$shouldTryOffhand(ItemStack mainhandStack) {
+    private boolean offhand$shouldTryOffhand(ItemStack mainhandStack, ItemStack offhandStack) {
+        if (offhandStack != null && offhandStack.getItem() instanceof ItemBow) {
+            // Offhand bow must remain usable even when mainhand holds a right-click item.
+            return true;
+        }
+
         if (mainhandStack == null || mainhandStack.stackSize <= 0) {
             return true;
         }

@@ -1,8 +1,11 @@
 package com.m.offhand.mixin;
 
 import com.m.offhand.client.OffhandRenderHelper;
-import net.minecraft.*;
-
+import net.minecraft.Container;
+import net.minecraft.EntityPlayer;
+import net.minecraft.GuiContainer;
+import net.minecraft.GuiInventory;
+import net.minecraft.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,7 +20,11 @@ public abstract class MixinGuiInventory extends GuiContainer {
 
     @Inject(method = "drawGuiContainerBackgroundLayer", at = @At("TAIL"))
     protected void offhand$drawOffhandSlot(float partialTicks, int mouseX, int mouseY, CallbackInfo ci) {
-        // 背包界面副手槽绘制
-        OffhandRenderHelper.drawOffhandSlotBackground(guiLeft + 79, guiTop + 64, 18, OffhandRenderHelper.OFFHAND_SLOT_TEXTURE);
+        EntityPlayer player = Minecraft.getMinecraft() != null ? Minecraft.getMinecraft().thePlayer : null;
+        OffhandRenderHelper.drawOffhandSlotBackground(
+            guiLeft + 79,
+            guiTop + 64,
+            18,
+            OffhandRenderHelper.getInventoryOffhandSlotTexture(player));
     }
 }
