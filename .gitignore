@@ -6,6 +6,7 @@ out/
 classes/
 package/
 .gradle-user/
+.claude/
 images/
 
 # eclipse

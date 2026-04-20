@@ -445,9 +445,24 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
             return false;
         }
 
-        // Route held-item mutations only while offhand slot is explicitly selected in our scoped context.
+        // Route held-item mutations while the offhand slot is explicitly selected in our scoped context.
         // Keep this true even when offhand stack just became null so convertOneOfHeldItem can apply its null-guard path.
-        return player.inventory.currentItem == offhandSlot;
+        if (player.inventory.currentItem == offhandSlot) {
+            return true;
+        }
+
+        // Vanilla onItemUseFinish fires convertOneOfHeldItem via the primary itemInUse while currentItem
+        // has already been restored to the mainhand slot. Route to offhand when the active use targets it.
+        if (offhandStack != null) {
+            if (this.itemInUse == offhandStack) {
+                return true;
+            }
+            if (this.offhand$itemInUse == offhandStack && this.offhand$itemInUseCount > 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Inject(method = "tryDamageHeldItem", at = @At("HEAD"), cancellable = true)
@@ -458,14 +473,8 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
             return;
         }
 
-        if (player.inCreativeMode()) {
-            cir.setReturnValue(null);
-            return;
-        }
-
         ItemStack offhandStack = player.inventory.mainInventory[offhandSlot];
         if (offhandStack == null) {
-            cir.setReturnValue(null);
             return;
         }
 
@@ -476,6 +485,11 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
                 && this.offhand$itemInUse == offhandStack;
 
         if (!hasPrimaryOffhandUse && !hasSecondaryOffhandUse) {
+            return;
+        }
+
+        if (player.inCreativeMode()) {
+            cir.setReturnValue(null);
             return;
         }
 

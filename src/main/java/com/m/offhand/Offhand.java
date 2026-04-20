@@ -27,13 +27,13 @@ public class Offhand implements ModInitializer {
         OffhandConfig.init();
         OffhandPacketHandler.init();
         OffhandEventHandler.init();
-        
+
         if (!FabricUtil.isServer()) {
             OffhandKeyHandler keyHandler = new OffhandKeyHandler();
             Handlers.Keybinding.register(keyHandler);
             Handlers.Tick.register(keyHandler);
         }
-        
+
         LOGGER.info("Offhand-MITE initialized");
     }
 
@@ -49,7 +49,7 @@ public class Offhand implements ModInitializer {
 
     public static void swapOffhand(EntityPlayer player) {
         if (player == null) return;
-        
+
         int currentSlot = player.inventory.currentItem;
         int offhandSlot = OffhandUtils.getOffhandSlot(player);
         if (offhandSlot < 0
@@ -62,18 +62,18 @@ public class Offhand implements ModInitializer {
 
         ItemStack mainhandItem = player.inventory.getCurrentItemStack();
         ItemStack offhandItem = OffhandUtils.getOffhandItem(player);
-        
+
         if (isOffhandBlacklisted(mainhandItem) || isOffhandBlacklisted(offhandItem)) {
             return;
         }
-        
+
         player.inventory.setInventorySlotContents(offhandSlot, mainhandItem);
         player.inventory.setInventorySlotContents(currentSlot, offhandItem);
-        
+
         if (player.inventoryContainer != null) {
             player.inventoryContainer.onCraftMatrixChanged(player.inventory);
         }
-        
+
         if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
             OffhandCompatRegistry.getSyncStrategy().syncOffhandItem(player);
         }
