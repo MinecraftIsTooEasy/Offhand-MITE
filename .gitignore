@@ -4,10 +4,9 @@
 build/
 out/
 classes/
-package/
-.gradle-user/
-.claude/
-images/
+
+# other
+lib/
 
 # eclipse
 

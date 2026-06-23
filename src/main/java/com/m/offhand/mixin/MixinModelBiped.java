@@ -27,4 +27,9 @@ public abstract class MixinModelBiped extends ModelBase {
     private void offhand$moveOffHandArm(float f1, float f2, float f3, float f4, float f5, float f6, Entity entity, CallbackInfo ci) {
         OffhandRenderHelper.moveOffHandArm(entity, (ModelBiped) (Object) this, f6);
     }
+
+    @Inject(method = "setRotationAngles", at = @At("TAIL"))
+    private void offhand$applyOffhandBowAim(float f1, float f2, float f3, float f4, float f5, float f6, Entity entity, CallbackInfo ci) {
+        OffhandRenderHelper.applyOffhandBowAim(entity, (ModelBiped) (Object) this, f3);
+    }
 }

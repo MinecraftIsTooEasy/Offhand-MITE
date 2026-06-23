@@ -56,12 +56,20 @@ public final class OffhandUtils {
         }
 
         int offhandSlot = getOffhandSlot(player);
-        if (offhandSlot < 0 || offhandSlot >= player.inventory.mainInventory.length) {
+        return useSelectedSlot(player, offhandSlot, syncSlot, action);
+    }
+
+    public static boolean useSelectedSlot(EntityPlayer player, int slot, boolean syncSlot, BooleanSupplier action) {
+        if (player == null || player.inventory == null || player.inventory.mainInventory == null || action == null) {
+            return false;
+        }
+
+        if (!isValidInventorySlot(player, slot)) {
             return false;
         }
 
         int oldSlot = player.inventory.currentItem;
-        if (oldSlot == offhandSlot) {
+        if (oldSlot == slot) {
             return action.getAsBoolean();
         }
 
@@ -73,18 +81,15 @@ public final class OffhandUtils {
             }
         }
 
-        player.inventory.currentItem = offhandSlot;
-        if (controller != null) {
-            controller.syncCurrentPlayItem();
-        }
-
+        rememberMainhandSlot(player, oldSlot);
+        player.inventory.currentItem = slot;
         try {
-            return action.getAsBoolean();
-        } finally {
-            player.inventory.currentItem = oldSlot;
             if (controller != null) {
                 controller.syncCurrentPlayItem();
             }
+            return action.getAsBoolean();
+        } finally {
+            restoreSelectedSlot(player, oldSlot, controller);
         }
     }
 
@@ -116,12 +121,54 @@ public final class OffhandUtils {
 
     public static int swapToOffhand(EntityPlayer player) {
         int heldItemTemp = player.inventory.currentItem;
-        player.inventory.currentItem = getOffhandSlot(player);
+        int offhandSlot = getOffhandSlot(player);
+        if (isValidInventorySlot(player, offhandSlot)) {
+            rememberMainhandSlot(player, heldItemTemp);
+            player.inventory.currentItem = offhandSlot;
+        }
         return heldItemTemp;
     }
 
     public static void swapBack(EntityPlayer player, int heldItemTemp) {
-        player.inventory.currentItem = heldItemTemp;
+        restoreSelectedSlot(player, heldItemTemp, null);
+    }
+
+    private static boolean isValidInventorySlot(EntityPlayer player, int slot) {
+        return player != null
+            && player.inventory != null
+            && player.inventory.mainInventory != null
+            && slot >= 0
+            && slot < player.inventory.mainInventory.length;
+    }
+
+    private static void restoreSelectedSlot(EntityPlayer player, int oldSlot, PlayerControllerMP controller) {
+        if (player == null || player.inventory == null || player.inventory.mainInventory == null) {
+            return;
+        }
+
+        int restoredSlot = oldSlot;
+        if (!isValidInventorySlot(player, restoredSlot)) {
+            restoredSlot = player.inventory.mainInventory.length > 0 ? 0 : -1;
+        }
+
+        if (restoredSlot >= 0) {
+            player.inventory.currentItem = restoredSlot;
+            rememberMainhandSlot(player, restoredSlot);
+            if (controller != null) {
+                controller.syncCurrentPlayItem();
+            }
+        }
+    }
+
+    private static void rememberMainhandSlot(EntityPlayer player, int slot) {
+        if (!isValidInventorySlot(player, slot)) {
+            return;
+        }
+
+        int offhandSlot = getOffhandSlot(player);
+        if (slot != offhandSlot) {
+            ((IOffhandPlayer) player).setMainhandSlot(slot);
+        }
     }
 
     public static void beginClientOffhandUseContext() {

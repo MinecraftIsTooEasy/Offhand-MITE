@@ -139,16 +139,7 @@ public abstract class MixinMinecraft {
             return false;
         }
 
-        int oldSlot = this.thePlayer.inventory.currentItem;
-        int offhandSlot = OffhandUtils.getOffhandSlot(this.thePlayer);
-        if (offhandSlot < 0 || offhandSlot >= this.thePlayer.inventory.mainInventory.length) {
-            return false;
-        }
-
-        try {
-            this.thePlayer.inventory.currentItem = offhandSlot;
-            this.playerController.syncCurrentPlayItem();
-
+        return OffhandUtils.useOffhandItem(this.thePlayer, true, () -> {
             RightClickFilter filter = new RightClickFilter();
             OffhandUtils.beginClientOffhandUseContext();
             try {
@@ -186,9 +177,6 @@ public abstract class MixinMinecraft {
             OffhandUtils.markClientSuppressMainhandRender(this.thePlayer, 2);
 
             return true;
-        } finally {
-            this.thePlayer.inventory.currentItem = oldSlot;
-            this.playerController.syncCurrentPlayItem();
-        }
+        });
     }
 }

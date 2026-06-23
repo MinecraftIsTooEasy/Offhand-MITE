@@ -53,6 +53,40 @@ public final class OffhandRenderHelper {
         }
     }
 
+    public static void applyOffhandBowAim(Entity entity, ModelBiped biped, float ageInTicks) {
+        if (!(entity instanceof EntityPlayer) || biped == null) {
+            return;
+        }
+
+        EntityPlayer player = (EntityPlayer) entity;
+        ItemStack offhandItem = OffhandUtils.getOffhandItem(player);
+        if (offhandItem == null || !(offhandItem.getItem() instanceof ItemBow)) {
+            return;
+        }
+
+        if (!((IOffhandPlayer) player).isOffhandItemInUse()) {
+            return;
+        }
+
+        float bowOffset = 0.0F;
+        float bowPull = 0.0F;
+        biped.bipedRightArm.rotateAngleZ = 0.0F;
+        biped.bipedLeftArm.rotateAngleZ = 0.0F;
+        biped.bipedLeftArm.rotateAngleY = 0.1F - bowOffset * 0.6F + biped.bipedHead.rotateAngleY;
+        biped.bipedRightArm.rotateAngleY = -(0.1F - bowOffset * 0.6F) + biped.bipedHead.rotateAngleY - 0.4F;
+        biped.bipedLeftArm.rotateAngleX = -((float) Math.PI / 2.0F) + biped.bipedHead.rotateAngleX;
+        biped.bipedRightArm.rotateAngleX = -((float) Math.PI / 2.0F) + biped.bipedHead.rotateAngleX;
+        biped.bipedLeftArm.rotateAngleX -= bowOffset * 1.2F - bowPull * 0.4F;
+        biped.bipedRightArm.rotateAngleX -= bowOffset * 1.2F - bowPull * 0.4F;
+
+        float zBob = MathHelper.cos(ageInTicks * 0.09F) * 0.05F + 0.05F;
+        float xBob = MathHelper.sin(ageInTicks * 0.067F) * 0.05F;
+        biped.bipedLeftArm.rotateAngleZ -= zBob;
+        biped.bipedRightArm.rotateAngleZ += zBob;
+        biped.bipedLeftArm.rotateAngleX += xBob;
+        biped.bipedRightArm.rotateAngleX -= xBob;
+    }
+
     public static void renderOffhandItemIn3rdPerson(EntityPlayer player, ModelBiped modelBipedMain, float frame) {
         ItemStack offhandItem = OffhandUtils.getOffhandItem(player);
         if (offhandItem == null) return;
@@ -96,6 +130,13 @@ public final class OffhandRenderHelper {
             GL11.glRotatef(20.0F, 1.0F, 0.0F, 0.0F);
             GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
             GL11.glScalef(-scale, -scale, scale);
+        } else if (stack.getItem() instanceof ItemBow) {
+            scale = 0.625F;
+            GL11.glTranslatef(0.0F, 0.125F, 0.3125F);
+            GL11.glRotatef(-20.0F, 0.0F, 1.0F, 0.0F);
+            GL11.glScalef(scale, -scale, scale);
+            GL11.glRotatef(-100.0F, 1.0F, 0.0F, 0.0F);
+            GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
         } else if (stack.getItem() instanceof ItemFishingRod) {
             scale = 0.625F;
             GL11.glTranslatef(0.0F, 0.125F, 0.3125F);

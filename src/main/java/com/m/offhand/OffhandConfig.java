@@ -326,15 +326,37 @@ public class OffhandConfig {
     private static void addBooleanValue(JsonObject values, String key, boolean value, String comment) {
         JsonObject entry = new JsonObject();
         entry.addProperty("value", value);
-        entry.addProperty("comment", comment);
+        entry.addProperty("comment", getComment(key, comment));
         values.add(key, entry);
     }
 
     private static void addArrayValue(JsonObject values, String key, JsonArray value, String comment) {
         JsonObject entry = new JsonObject();
         entry.add("value", value);
-        entry.addProperty("comment", comment);
+        entry.addProperty("comment", getComment(key, comment));
         values.add(key, entry);
+    }
+
+    private static String getComment(String key, String fallback) {
+        if ("offhand.offhandAttack".equals(key)) {
+            return "Whether offhand can participate in attack logic. Reserved; keep false for this version.";
+        }
+        if ("offhand.emptyOffhand".equals(key)) {
+            return "Whether empty-offhand restrictions are enabled. Reserved; keep false for this version.";
+        }
+        if ("offhand.offhandBreakBlocks".equals(key)) {
+            return "Whether offhand can participate in block breaking logic. Reserved; keep false for this version.";
+        }
+        if ("offhand.offhandPickup".equals(key)) {
+            return "Whether item pickup may place items into the offhand slot. False is safer when inventory is full.";
+        }
+        if ("offhand.debugLogging".equals(key)) {
+            return "Whether debug logging is enabled. Use while troubleshooting; disable during normal play.";
+        }
+        if ("offhand.offhandBlacklist".equals(key)) {
+            return "Offhand blacklist. Use item unlocalizedName values, for example item.bow.";
+        }
+        return fallback == null ? "" : fallback;
     }
 
     private static final class ConfigData {

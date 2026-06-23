@@ -110,13 +110,9 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
                     }
                 }
             } else if (--this.offhand$itemInUseCount <= 0) {
-                int oldSlot = player.inventory.currentItem;
-                try {
-                    player.inventory.currentItem = offhandSlot;
+                OffhandUtils.useOffhandItem(player, false, () -> {
                     offhandStack.onItemUseFinish(player.worldObj, player);
-                } finally {
-                    player.inventory.currentItem = oldSlot;
-                }
+                });
                 this.offhand$itemInUse = null;
                 this.offhand$itemInUseCount = 0;
                 if (this.offhand$isOffhandItemInUse) {
@@ -346,13 +342,9 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
             return;
         }
 
-        int oldSlot = player.inventory.currentItem;
-        try {
-            player.inventory.currentItem = offhandSlot;
+        OffhandUtils.useOffhandItem(player, false, () -> {
             offhandStack.onPlayerStoppedUsing(player.worldObj, player, this.offhand$itemInUseCount);
-        } finally {
-            player.inventory.currentItem = oldSlot;
-        }
+        });
 
         this.offhand$itemInUse = null;
         this.offhand$itemInUseCount = 0;
@@ -420,22 +412,16 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
             return;
         }
 
-        int targetSlot = offhandSlot;
-
-        int oldSlot = player.inventory.currentItem;
-        try {
-            player.inventory.currentItem = targetSlot;
+        OffhandUtils.useOffhandItem(player, false, () -> {
             ItemStack targetStack = player.inventory.getCurrentItemStack();
 
             if (targetStack == null || targetStack.stackSize <= 0) {
                 // Prevent InventoryPlayer.convertOneItem NPE when target stack was already cleared.
-                player.inventory.setInventorySlotContents(targetSlot, createdItemStack);
+                player.inventory.setInventorySlotContents(offhandSlot, createdItemStack);
             } else {
                 player.inventory.convertOneOfCurrentItem(createdItemStack);
             }
-        } finally {
-            player.inventory.currentItem = oldSlot;
-        }
+        });
         ci.cancel();
     }
 
@@ -493,16 +479,13 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
             return;
         }
 
-        int oldSlot = player.inventory.currentItem;
-        ItemDamageResult result;
-        try {
-            player.inventory.currentItem = offhandSlot;
-            result = offhandStack.tryDamageItem(damageSource, amount, player);
-        } finally {
-            player.inventory.currentItem = oldSlot;
+        final ItemDamageResult[] result = new ItemDamageResult[1];
+        if (OffhandUtils.useOffhandItem(player, false, () -> {
+                result[0] = offhandStack.tryDamageItem(damageSource, amount, player);
+                return true;
+            })) {
+            cir.setReturnValue(result[0]);
         }
-
-        cir.setReturnValue(result);
     }
 
     @Inject(method = "isBlocking", at = @At("HEAD"), cancellable = true)
