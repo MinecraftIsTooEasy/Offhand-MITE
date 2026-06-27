@@ -11,6 +11,7 @@
     "MixinEntityTrackerEntry",
     "MixinGuiContainerCreative",
     "MixinInventoryPlayer",
+    "MixinItemInWorldManager",
     "MixinNetServerHandler"
   ],
   "client": [

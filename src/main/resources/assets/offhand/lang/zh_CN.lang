@@ -1,1 +1,14 @@
 key.offhand.swap=副手
+
+config.menu.comment.Offhand=Offhand 副手模组配置
+
+config.name.offhand.offhandAttack=副手攻击
+config.comment.offhand.offhandAttack=开启后，攻击时副手武器和战锤、战斧等攻击类工具会额外提供伤害，并正常消耗副手耐久。
+config.name.offhand.offhandBreakBlocks=副手挖掘方块
+config.comment.offhand.offhandBreakBlocks=开启后，主手和副手都拿着适合当前方块的挖掘工具时，副手工具会一起提供挖掘强度，并正常消耗耐久。
+config.name.offhand.offhandPickup=副手自动拾取
+config.comment.offhand.offhandPickup=是否允许拾取物品时自动放入副手槽。背包满时关闭更稳。
+config.name.offhand.debugLogging=调试日志
+config.comment.offhand.debugLogging=是否启用调试日志。排查问题时开启，正常游玩建议关闭。
+config.name.offhand.offhandBlacklist=副手黑名单
+config.comment.offhand.offhandBlacklist=禁止放入副手槽的物品列表。请填写物品的 unlocalizedName，例如 item.bow。

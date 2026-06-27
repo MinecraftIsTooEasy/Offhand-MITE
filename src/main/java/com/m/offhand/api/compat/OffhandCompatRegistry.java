@@ -1,6 +1,5 @@
 package com.m.offhand.api.compat;
 
-import com.m.offhand.network.OffhandAnimationPacket;
 import com.m.offhand.network.OffhandSyncOffhandUse;
 import com.m.offhand.network.OffhandSyncPacket;
 import net.minecraft.EntityPlayer;
@@ -59,6 +58,28 @@ public final class OffhandCompatRegistry {
         } : filter;
     }
 
+    public static void syncOffhandItem(EntityPlayer target) {
+        if (target != null && target.worldObj != null && !target.worldObj.isRemote && target instanceof ServerPlayer) {
+            syncStrategy.syncOffhandItem(target);
+        }
+    }
+
+    public static void syncOffhandUseState(EntityPlayer target, boolean usingOffhand) {
+        if (target != null && target.worldObj != null && !target.worldObj.isRemote && target instanceof ServerPlayer) {
+            syncStrategy.syncOffhandUseState(target, usingOffhand);
+        }
+    }
+
+    public static void syncOffhandAnimation(EntityPlayer target) {
+        // Offhand swing animation is disabled; kept as a no-op for API compatibility.
+    }
+
+    public static void syncOffhandItemToPlayer(ServerPlayer receiver, EntityPlayer target) {
+        if (receiver != null && target != null) {
+            syncStrategy.syncOffhandItemToPlayer(receiver, target);
+        }
+    }
+
     private static final class DefaultSyncStrategy implements IOffhandSyncStrategy {
 
         @Override
@@ -73,7 +94,7 @@ public final class OffhandCompatRegistry {
 
         @Override
         public void syncOffhandAnimation(EntityPlayer target) {
-            OffhandAnimationPacket.sendToTracking(target);
+            // No-op: offhand swing animation is disabled.
         }
 
         @Override

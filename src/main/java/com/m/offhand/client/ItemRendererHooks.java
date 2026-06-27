@@ -5,7 +5,6 @@ import net.minecraft.*;
 import org.lwjgl.opengl.GL11;
 
 import com.m.offhand.api.compat.OffhandCompatRegistry;
-import com.m.offhand.api.core.IOffhandPlayer;
 import com.m.offhand.api.core.OffhandUtils;
 
 public class ItemRendererHooks {
@@ -25,13 +24,8 @@ public class ItemRendererHooks {
         ItemStack offhandItem = OffhandUtils.getOffhandItem(player);
         
         if (offhandItem == null) {
-            IOffhandPlayer offhandPlayer = (IOffhandPlayer) (Object) player;
-            if (offhandPlayer.getOffSwingProgress(frame) == 0) {
-                return;
-            }
+            return;
         }
-
-        OffhandRenderHelper.firstPersonFrame = frame;
         
         GL11.glEnable(GL11.GL_CULL_FACE);
         GL11.glCullFace(GL11.GL_FRONT);
@@ -44,15 +38,15 @@ public class ItemRendererHooks {
         GL11.glRotatef((player.rotationPitch - f3) * -0.1F, 1.0F, 0.0F, 0.0F);
         GL11.glRotatef((player.rotationYaw - f4) * -0.1F, 0.0F, 1.0F, 0.0F);
 
-        IOffhandPlayer offhandPlayer = (IOffhandPlayer) (Object) player;
+        boolean animateAction = OffhandRenderHelper.shouldUseClientOffhandActionSwing(player);
         float originalPrevSwing = player.prevSwingProgress;
         float originalSwing = player.swingProgress;
-        float offhandSwing = offhandPlayer.getOffSwingProgress(frame);
 
-        // ItemRenderer uses getSwingProgress() for first-person swing transforms.
-        // Mirror offhand swing into these two fields during offhand render only.
-        player.prevSwingProgress = offhandSwing;
-        player.swingProgress = offhandSwing;
+        // Keep the offhand item steady except when it should mirror the main-hand action.
+        if (!animateAction) {
+            player.prevSwingProgress = 0.0F;
+            player.swingProgress = 0.0F;
+        }
 
         try {
             OffhandUtils.beginClientOffhandRenderContext();

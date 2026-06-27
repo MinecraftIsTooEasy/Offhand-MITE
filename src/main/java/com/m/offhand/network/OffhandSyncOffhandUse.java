@@ -50,7 +50,10 @@ public class OffhandSyncOffhandUse implements Packet {
         }
         Entity target = player.worldObj.getEntityByID(this.entityId);
         if (target instanceof EntityPlayer) {
-            ((IOffhandPlayer) target).setOffhandItemInUse(this.isUsingOffhand);
+            IOffhandPlayer offhandPlayer = (IOffhandPlayer) target;
+            if (offhandPlayer.isOffhandItemInUse() != this.isUsingOffhand) {
+                offhandPlayer.setOffhandItemInUse(this.isUsingOffhand);
+            }
         }
     }
 
@@ -61,7 +64,7 @@ public class OffhandSyncOffhandUse implements Packet {
 
     @Environment(EnvType.SERVER)
     public static void sendToTracking(EntityPlayer target, boolean isUsingOffhand) {
-        OffhandNetDispatch.sendToTracking(target, new OffhandSyncOffhandUse(target.entityId, isUsingOffhand));
+        OffhandNetDispatch.sendToTrackingAndSelf(target, new OffhandSyncOffhandUse(target.entityId, isUsingOffhand));
     }
 
     @Environment(EnvType.SERVER)

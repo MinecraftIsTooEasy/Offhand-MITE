@@ -1,1 +1,14 @@
 key.offhand.swap=Offhand
+
+config.menu.comment.Offhand=Offhand configuration
+
+config.name.offhand.offhandAttack=Offhand Attack
+config.comment.offhand.offhandAttack=Allows offhand weapons and melee tools, such as war hammers and battle axes, to add damage and consume durability during attacks.
+config.name.offhand.offhandBreakBlocks=Offhand Block Breaking
+config.comment.offhand.offhandBreakBlocks=When both hands hold tools suitable for the target block, the offhand tool adds mining strength and consumes durability.
+config.name.offhand.offhandPickup=Offhand Auto Pickup
+config.comment.offhand.offhandPickup=Whether picked-up items may be placed into the offhand slot. Disabling this is safer when the inventory is full.
+config.name.offhand.debugLogging=Debug Logging
+config.comment.offhand.debugLogging=Whether debug logging is enabled. Enable while troubleshooting; disable during normal play.
+config.name.offhand.offhandBlacklist=Offhand Blacklist
+config.comment.offhand.offhandBlacklist=Items that cannot be placed into the offhand slot. Use item unlocalizedName values, for example item.bow.

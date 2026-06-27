@@ -1,15 +1,11 @@
 package com.m.offhand.mixin;
 
 import com.m.offhand.api.compat.OffhandCompatRegistry;
-import com.m.offhand.api.core.IOffhandPlayer;
 import com.m.offhand.api.core.OffhandUtils;
-import com.m.offhand.event.TorchHandler;
 import net.minecraft.EntityClientPlayerMP;
-import net.minecraft.EntityPlayer;
 import net.minecraft.GuiScreen;
 import net.minecraft.Item;
 import net.minecraft.ItemBow;
-import net.minecraft.ItemBlock;
 import net.minecraft.ItemHoe;
 import net.minecraft.ItemStack;
 import net.minecraft.ItemSword;
@@ -70,14 +66,9 @@ public abstract class MixinMinecraft {
                 return;
             }
 
-            if (offhandStack.getItem() instanceof ItemBlock && !TorchHandler.shouldPlace(mainhandStack, offhandStack)) {
-                return;
-            }
         }
 
-        if (this.offhand$tryUseOffhandRightClick()) {
-            ((IOffhandPlayer) (EntityPlayer) this.thePlayer).swingOffItem();
-        }
+        this.offhand$tryUseOffhandRightClick();
     }
 
     @Unique
@@ -139,16 +130,7 @@ public abstract class MixinMinecraft {
             return false;
         }
 
-        int oldSlot = this.thePlayer.inventory.currentItem;
-        int offhandSlot = OffhandUtils.getOffhandSlot(this.thePlayer);
-        if (offhandSlot < 0 || offhandSlot >= this.thePlayer.inventory.mainInventory.length) {
-            return false;
-        }
-
-        try {
-            this.thePlayer.inventory.currentItem = offhandSlot;
-            this.playerController.syncCurrentPlayItem();
-
+        return OffhandUtils.useOffhandItem(this.thePlayer, true, () -> {
             RightClickFilter filter = new RightClickFilter();
             OffhandUtils.beginClientOffhandUseContext();
             try {
@@ -186,9 +168,6 @@ public abstract class MixinMinecraft {
             OffhandUtils.markClientSuppressMainhandRender(this.thePlayer, 2);
 
             return true;
-        } finally {
-            this.thePlayer.inventory.currentItem = oldSlot;
-            this.playerController.syncCurrentPlayItem();
-        }
+        });
     }
 }

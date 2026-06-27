@@ -22,7 +22,6 @@ public final class OffhandPacketHandler {
     public static void init() {
         PacketReader.registerServerPacketReader(OffhandSwapRequestPacket.CHANNEL, OffhandSwapRequestPacket::new);
         PacketReader.registerClientPacketReader(OffhandSyncPacket.CHANNEL, OffhandSyncPacket::new);
-        PacketReader.registerClientPacketReader(OffhandAnimationPacket.CHANNEL, OffhandAnimationPacket::new);
         PacketReader.registerClientPacketReader(OffhandSyncOffhandUse.CHANNEL, OffhandSyncOffhandUse::new);
         PacketReader.registerClientPacketReader(OffhandCancelUsage.CHANNEL, OffhandCancelUsage::new);
     }

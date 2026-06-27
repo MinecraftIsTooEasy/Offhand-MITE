@@ -10,7 +10,6 @@ import moddedmite.rustedironcore.api.util.FabricUtil;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.EntityPlayer;
 import net.minecraft.ItemStack;
-import net.minecraft.ServerPlayer;
 import net.xiaoyu233.fml.ModResourceManager;
 
 import org.apache.logging.log4j.LogManager;
@@ -24,7 +23,7 @@ public class Offhand implements ModInitializer {
     @Override
     public void onInitialize() {
         ModResourceManager.addResourcePackDomain(MODID);
-        OffhandConfig.init();
+        OffhandManyLibConfig.init();
         OffhandPacketHandler.init();
         OffhandEventHandler.init();
 
@@ -38,11 +37,11 @@ public class Offhand implements ModInitializer {
     }
 
     public static boolean isOffhandBlacklisted(ItemStack stack) {
-        return OffhandConfig.isOffhandBlacklisted(stack);
+        return OffhandManyLibConfig.isOffhandBlacklisted(stack);
     }
 
     public static void debug(String message, Object... args) {
-        if (OffhandConfig.isDebugLogging()) {
+        if (OffhandManyLibConfig.DEBUG_LOGGING.getBooleanValue()) {
             LOGGER.info(message, args);
         }
     }
@@ -74,8 +73,6 @@ public class Offhand implements ModInitializer {
             player.inventoryContainer.onCraftMatrixChanged(player.inventory);
         }
 
-        if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
-            OffhandCompatRegistry.getSyncStrategy().syncOffhandItem(player);
-        }
+        OffhandCompatRegistry.syncOffhandItem(player);
     }
 }

@@ -53,7 +53,11 @@ public class OffhandSyncPacket implements Packet {
         }
         Entity target = player.worldObj.getEntityByID(this.entityId);
         if (target instanceof EntityPlayer) {
-            ((IOffhandInventory) ((EntityPlayer) target).inventory).setOffhandItem(this.offhandStack);
+            IOffhandInventory inventory = (IOffhandInventory) ((EntityPlayer) target).inventory;
+            ItemStack incoming = this.offhandStack == null ? null : this.offhandStack.copy();
+            if (!ItemStack.areItemStacksEqual(inventory.getOffhandItem(), incoming)) {
+                inventory.setOffhandItem(incoming);
+            }
         }
     }
 
@@ -65,13 +69,17 @@ public class OffhandSyncPacket implements Packet {
     @Environment(EnvType.SERVER)
     public static void sendToClient(ServerPlayer player, EntityPlayer target) {
         ItemStack offhandStack = OffhandUtils.getOffhandItem(target);
-        OffhandNetDispatch.sendToPlayer(player, new OffhandSyncPacket(target.entityId, offhandStack));
+        OffhandNetDispatch.sendToPlayer(
+            player,
+            new OffhandSyncPacket(target.entityId, offhandStack == null ? null : offhandStack.copy()));
     }
 
     @Environment(EnvType.SERVER)
     public static void sendToTracking(EntityPlayer target) {
         ItemStack offhandStack = OffhandUtils.getOffhandItem(target);
-        OffhandNetDispatch.sendToTracking(target, new OffhandSyncPacket(target.entityId, offhandStack));
+        OffhandNetDispatch.sendToTracking(
+            target,
+            new OffhandSyncPacket(target.entityId, offhandStack == null ? null : offhandStack.copy()));
     }
 
     @Environment(EnvType.SERVER)

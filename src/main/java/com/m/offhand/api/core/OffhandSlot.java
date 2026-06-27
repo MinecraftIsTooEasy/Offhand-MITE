@@ -1,6 +1,6 @@
 package com.m.offhand.api.core;
 
-import com.m.offhand.OffhandConfig;
+import com.m.offhand.OffhandManyLibConfig;
 import net.minecraft.*;
 
 public class OffhandSlot extends Slot {
@@ -11,7 +11,7 @@ public class OffhandSlot extends Slot {
 
     @Override
     public boolean isItemValid(ItemStack stack) {
-        return stack == null || !OffhandConfig.isOffhandBlacklisted(stack);
+        return stack == null || !OffhandManyLibConfig.isOffhandBlacklisted(stack);
     }
 
     @Override
