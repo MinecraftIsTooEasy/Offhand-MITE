@@ -1,6 +1,7 @@
 package com.m.offhand.mixin;
 
 import com.m.offhand.api.compat.OffhandCompatRegistry;
+import com.m.offhand.api.core.IOffhandPlayer;
 import com.m.offhand.api.core.OffhandUtils;
 import com.m.offhand.client.OffhandRenderHelper;
 import net.minecraft.*;
@@ -25,6 +26,30 @@ public class MixinRenderPlayer {
 
     @Shadow
     private ModelBiped modelArmor;
+
+    @Inject(method = "func_130009_a", at = @At("HEAD"))
+    private void offhand$setLeftHandItemForPlayerRender(
+        AbstractClientPlayer player,
+        double x,
+        double y,
+        double z,
+        float yaw,
+        float partialTicks,
+        CallbackInfo ci) {
+        this.offhand$setLeftHandItemState(player);
+    }
+
+    @Inject(method = "func_130009_a", at = @At("RETURN"))
+    private void offhand$clearLeftHandItemAfterPlayerRender(
+        AbstractClientPlayer player,
+        double x,
+        double y,
+        double z,
+        float yaw,
+        float partialTicks,
+        CallbackInfo ci) {
+        this.offhand$setLeftHandItemState(0);
+    }
 
     @Inject(method = "renderSpecials", at = @At(value = "TAIL"))
     private void offhand$render3rdPersonOffhand(AbstractClientPlayer par1AbstractClientPlayer, float par2, CallbackInfo ci) {
@@ -52,17 +77,39 @@ public class MixinRenderPlayer {
 
     @Inject(method = "renderSpecials", at = @At(value = "HEAD"))
     private void offhand$setLeftHandItem(AbstractClientPlayer par1AbstractClientPlayer, float par2, CallbackInfo ci) {
-        if (!OffhandCompatRegistry.getRenderPolicy().shouldRenderThirdPersonOffhand(par1AbstractClientPlayer)) {
-            this.modelArmorChestplate.heldItemLeft = this.modelArmor.heldItemLeft = this.modelBipedMain.heldItemLeft = 0;
-            return;
+        this.offhand$setLeftHandItemState(par1AbstractClientPlayer);
+    }
+
+    @Unique
+    private void offhand$setLeftHandItemState(AbstractClientPlayer player) {
+        this.offhand$setLeftHandItemState(this.offhand$getLeftHandItemState(player));
+    }
+
+    @Unique
+    private void offhand$setLeftHandItemState(int state) {
+        this.modelArmorChestplate.heldItemLeft = this.modelArmor.heldItemLeft = this.modelBipedMain.heldItemLeft = state;
+    }
+
+    @Unique
+    private int offhand$getLeftHandItemState(AbstractClientPlayer player) {
+        if (!OffhandCompatRegistry.getRenderPolicy().shouldRenderThirdPersonOffhand(player)) {
+            return 0;
         }
 
-        ItemStack offhand = OffhandUtils.getOffhandItem(par1AbstractClientPlayer);
-        if (offhand$hasRenderableStack(offhand)) {
-            this.modelArmorChestplate.heldItemLeft = this.modelArmor.heldItemLeft = this.modelBipedMain.heldItemLeft = 1;
-        } else {
-            this.modelArmorChestplate.heldItemLeft = this.modelArmor.heldItemLeft = this.modelBipedMain.heldItemLeft = 0;
+        ItemStack offhand = OffhandUtils.getOffhandItem(player);
+        if (!offhand$hasRenderableStack(offhand)) {
+            return 0;
         }
+
+        return this.offhand$isOffhandBlocking(player, offhand) ? 3 : 1;
+    }
+
+    @Unique
+    private boolean offhand$isOffhandBlocking(AbstractClientPlayer player, ItemStack offhand) {
+        return player != null
+            && offhand != null
+            && ((IOffhandPlayer) player).isOffhandItemInUse()
+            && offhand.getItemInUseAction(player) == EnumItemInUseAction.BLOCK;
     }
 
     @Unique

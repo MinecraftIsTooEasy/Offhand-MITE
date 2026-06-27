@@ -28,6 +28,6 @@ public class MixinEntityTrackerEntry {
             return;
         }
 
-        OffhandCompatRegistry.getSyncStrategy().syncOffhandItemToPlayer(trackingPlayer, trackedPlayer);
+        OffhandCompatRegistry.syncOffhandItemToPlayer(trackingPlayer, trackedPlayer);
     }
 }

@@ -1,18 +1,28 @@
 package com.m.offhand.mixin;
 
+import com.m.offhand.OffhandManyLibConfig;
 import com.m.offhand.api.compat.OffhandCompatRegistry;
 import com.m.offhand.api.core.IOffhandInventory;
 import com.m.offhand.api.core.IOffhandPlayer;
+import com.m.offhand.api.core.OffhandActionHelper;
 import com.m.offhand.api.core.OffhandUtils;
+import net.minecraft.Block;
+import net.minecraft.Damage;
 import net.minecraft.DamageSource;
+import net.minecraft.EnchantmentDamage;
+import net.minecraft.Entity;
+import net.minecraft.EntityDamageResult;
+import net.minecraft.EntityLivingBase;
 import net.minecraft.EntityPlayer;
+import net.minecraft.EntitySkeleton;
 import net.minecraft.EnumItemInUseAction;
 import net.minecraft.InventoryPlayer;
+import net.minecraft.Item;
+import net.minecraft.ItemCudgel;
 import net.minecraft.ItemDamageResult;
 import net.minecraft.ItemStack;
-import net.minecraft.Potion;
-import net.minecraft.PotionEffect;
-import net.minecraft.ServerPlayer;
+import net.minecraft.ItemWarHammer;
+import net.minecraft.Material;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -24,18 +34,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(EntityPlayer.class)
 public abstract class MixinEntityPlayer implements IOffhandPlayer {
-
-    @Unique
-    private boolean offhand$isOffHandSwingInProgress = false;
-
-    @Unique
-    private int offhand$offHandSwingProgressInt = 0;
-
-    @Unique
-    private float offhand$offHandSwingProgress = 0.0F;
-
-    @Unique
-    private float offhand$prevOffHandSwingProgress = 0.0F;
 
     @Unique
     private boolean offhand$isOffhandItemInUse = false;
@@ -52,47 +50,197 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
     @Unique
     private boolean offhand$clearMainItemWasOffhand = false;
 
+    @Unique
+    private boolean offhand$calculatingOffhandMiningStrength = false;
+
+    @Unique
+    private Entity offhand$lastAttackTarget = null;
+
+    @Unique
+    private ItemStack offhand$lastAttackStack = null;
+
+    @Unique
+    private boolean offhand$lastAttackWasEffective = false;
+
     @Shadow
     protected ItemStack itemInUse;
 
     @Override
     public void swingOffItem() {
-        if (!this.offhand$isOffHandSwingInProgress
-            || this.offhand$offHandSwingProgressInt >= this.offhand$getArmSwingAnimationEnd() / 2
-            || this.offhand$offHandSwingProgressInt < 0) {
-            this.offhand$offHandSwingProgressInt = -1;
-            this.offhand$isOffHandSwingInProgress = true;
-
-            EntityPlayer player = (EntityPlayer) (Object) this;
-            if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
-                OffhandCompatRegistry.getSyncStrategy().syncOffhandAnimation(player);
-            }
-        }
+        // Offhand swing animation is intentionally disabled.
     }
 
     @Override
     public float getOffSwingProgress(float frame) {
-        return this.offhand$prevOffHandSwingProgress
-            + (this.offhand$offHandSwingProgress - this.offhand$prevOffHandSwingProgress) * frame;
+        return 0.0F;
+    }
+
+    @Inject(method = "getCurrentPlayerStrVsBlock", at = @At("RETURN"), cancellable = true)
+    private void offhand$addOffhandToolMiningStrength(
+        int x,
+        int y,
+        int z,
+        boolean applyHeldItem,
+        CallbackInfoReturnable<Float> cir) {
+        if (this.offhand$calculatingOffhandMiningStrength
+            || !applyHeldItem
+            || !OffhandManyLibConfig.OFFHAND_BREAK_BLOCKS.getBooleanValue()) {
+            return;
+        }
+
+        Float currentReturnValue = cir.getReturnValue();
+        if (currentReturnValue == null) {
+            return;
+        }
+
+        float mainStrength = currentReturnValue.floatValue();
+        if (mainStrength <= 0.0F) {
+            return;
+        }
+
+        EntityPlayer player = (EntityPlayer) (Object) this;
+        if (player.worldObj == null || player.inventory == null) {
+            return;
+        }
+
+        Block block = player.worldObj.getBlock(x, y, z);
+        if (block == null) {
+            return;
+        }
+
+        int metadata = player.worldObj.getBlockMetadata(x, y, z);
+        ItemStack mainhand = player.inventory.getCurrentItemStack();
+        ItemStack offhand = OffhandUtils.getOffhandItem(player);
+        if (!OffhandActionHelper.canDualMineWithTools(player, block, metadata, mainhand, offhand)) {
+            return;
+        }
+
+        this.offhand$calculatingOffhandMiningStrength = true;
+        try {
+            OffhandUtils.useOffhandItem(player, false, () -> {
+                float offhandStrength = player.getCurrentPlayerStrVsBlock(x, y, z, true);
+                if (offhandStrength > 0.0F) {
+                    OffhandActionHelper.recordDualMiningBlock(player, x, y, z, block, metadata, mainhand, offhand);
+                    cir.setReturnValue(Float.valueOf(mainStrength + offhandStrength));
+                }
+            });
+        } finally {
+            this.offhand$calculatingOffhandMiningStrength = false;
+        }
+    }
+
+    @Inject(method = "calcRawMeleeDamageVs(Lnet/minecraft/Entity;ZZ)F", at = @At("RETURN"), cancellable = true)
+    private void offhand$addOffhandAttackDamage(
+        Entity target,
+        boolean critical,
+        boolean suspendedInLiquid,
+        CallbackInfoReturnable<Float> cir) {
+        if (!OffhandManyLibConfig.OFFHAND_ATTACK.getBooleanValue()) {
+            return;
+        }
+
+        Float currentReturnValue = cir.getReturnValue();
+        if (currentReturnValue == null || currentReturnValue.floatValue() <= 0.0F) {
+            return;
+        }
+
+        EntityPlayer player = (EntityPlayer) (Object) this;
+        if (player.worldObj == null || player.worldObj.isRemote || player.inventory == null) {
+            return;
+        }
+
+        ItemStack mainhand = player.inventory.getCurrentItemStack();
+        ItemStack offhand = OffhandUtils.getOffhandItem(player);
+        if (!OffhandActionHelper.canOffhandAttack(player, mainhand, offhand)) {
+            return;
+        }
+
+        float offhandBonus = this.offhand$getOffhandAttackBonus(offhand, target);
+        if (critical && offhandBonus > 0.0F) {
+            offhandBonus *= 1.5F;
+        }
+        if (suspendedInLiquid && offhandBonus > 1.0F) {
+            offhandBonus = 1.0F + (offhandBonus - 1.0F) * 0.5F;
+        }
+
+        if (offhandBonus > 0.0F) {
+            this.offhand$lastAttackTarget = target;
+            this.offhand$lastAttackStack = offhand;
+            cir.setReturnValue(Float.valueOf(currentReturnValue.floatValue() + offhandBonus));
+        }
+    }
+
+    @Unique
+    private float offhand$getOffhandAttackBonus(ItemStack offhand, Entity target) {
+        float bonus = offhand.getMeleeDamageBonus();
+        Item item = offhand.getItem();
+
+        if (target instanceof EntityLivingBase) {
+            EntityLivingBase livingTarget = (EntityLivingBase) target;
+            if (livingTarget.isEntityUndead() && item.hasMaterial(Material.silver)) {
+                bonus *= 1.25F;
+            }
+            if (target instanceof EntitySkeleton && (item instanceof ItemCudgel || item instanceof ItemWarHammer)) {
+                bonus *= 2.0F;
+            }
+            bonus += EnchantmentDamage.getDamageModifiers(offhand, livingTarget);
+        }
+
+        return bonus;
+    }
+
+    @Inject(method = "attackTargetEntityWithCurrentItem", at = @At("HEAD"))
+    private void offhand$beginAttackTargetEntityWithCurrentItem(Entity target, CallbackInfo ci) {
+        this.offhand$clearLastAttack();
+        this.offhand$lastAttackWasEffective = false;
+    }
+
+    @Redirect(
+        method = "attackTargetEntityWithCurrentItem",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/Entity;attackEntityFrom(Lnet/minecraft/Damage;)Lnet/minecraft/EntityDamageResult;"))
+    private EntityDamageResult offhand$captureAttackResult(Entity target, Damage damage) {
+        EntityDamageResult result = target.attackEntityFrom(damage);
+        this.offhand$lastAttackWasEffective =
+            result != null && result.entityWasNegativelyAffected();
+        return result;
+    }
+
+    @Inject(method = "attackTargetEntityWithCurrentItem", at = @At("RETURN"))
+    private void offhand$damageOffhandAfterAttack(Entity target, CallbackInfo ci) {
+        if (target == null || target != this.offhand$lastAttackTarget) {
+            this.offhand$clearLastAttack();
+            return;
+        }
+
+        ItemStack offhand = this.offhand$lastAttackStack;
+        boolean attackWasEffective = this.offhand$lastAttackWasEffective;
+        this.offhand$clearLastAttack();
+
+        if (!(target instanceof EntityLivingBase)
+            || !attackWasEffective
+            || !OffhandActionHelper.hasUsableStack(offhand)) {
+            return;
+        }
+
+        EntityPlayer player = (EntityPlayer) (Object) this;
+        if (player.worldObj == null || player.worldObj.isRemote) {
+            return;
+        }
+
+        OffhandUtils.useOffhandItem(player, false, () -> {
+            offhand.hitEntity((EntityLivingBase) target, player);
+        });
+    }
+
+    @Unique
+    private void offhand$clearLastAttack() {
+        this.offhand$lastAttackTarget = null;
+        this.offhand$lastAttackStack = null;
+        this.offhand$lastAttackWasEffective = false;
     }
 
     @Inject(method = "onUpdate", at = @At(value = "TAIL"))
     private void offhand$updateOffhandSwing(CallbackInfo ci) {
-        this.offhand$prevOffHandSwingProgress = this.offhand$offHandSwingProgress;
-
-        if (this.offhand$isOffHandSwingInProgress) {
-            ++this.offhand$offHandSwingProgressInt;
-            if (this.offhand$offHandSwingProgressInt >= this.offhand$getArmSwingAnimationEnd()) {
-                this.offhand$offHandSwingProgressInt = 0;
-                this.offhand$isOffHandSwingInProgress = false;
-            }
-        } else {
-            this.offhand$offHandSwingProgressInt = 0;
-        }
-
-        this.offhand$offHandSwingProgress =
-            (float) this.offhand$offHandSwingProgressInt / (float) this.offhand$getArmSwingAnimationEnd();
-
         EntityPlayer player = (EntityPlayer) (Object) this;
         if (this.offhand$itemInUse != null) {
             int offhandSlot = ((IOffhandInventory) player.inventory).getOffhandSlot();
@@ -105,9 +253,7 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
                 this.offhand$itemInUseCount = 0;
                 if (this.offhand$isOffhandItemInUse) {
                     this.offhand$isOffhandItemInUse = false;
-                    if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
-                        OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, false);
-                    }
+                    OffhandCompatRegistry.syncOffhandUseState(player, false);
                 }
             } else if (--this.offhand$itemInUseCount <= 0) {
                 OffhandUtils.useOffhandItem(player, false, () -> {
@@ -117,9 +263,7 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
                 this.offhand$itemInUseCount = 0;
                 if (this.offhand$isOffhandItemInUse) {
                     this.offhand$isOffhandItemInUse = false;
-                    if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
-                        OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, false);
-                    }
+                    OffhandCompatRegistry.syncOffhandUseState(player, false);
                 }
             }
         }
@@ -139,9 +283,7 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
 
             if (!hasSecondaryOffhandUse && !hasPrimaryOffhandUse && player.inventory.currentItem != offhandSlot) {
                 this.offhand$isOffhandItemInUse = false;
-                if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
-                    OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, false);
-                }
+                OffhandCompatRegistry.syncOffhandUseState(player, false);
             }
         }
     }
@@ -254,9 +396,7 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
 
             if (!this.offhand$isOffhandItemInUse) {
                 this.offhand$isOffhandItemInUse = true;
-                if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
-                    OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, true);
-                }
+                OffhandCompatRegistry.syncOffhandUseState(player, true);
             }
 
             cir.setReturnValue(true);
@@ -283,9 +423,7 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
 
         this.offhand$isOffhandItemInUse = usingOffhand;
 
-        if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
-            OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, usingOffhand);
-        }
+        OffhandCompatRegistry.syncOffhandUseState(player, usingOffhand);
     }
 
     @Inject(method = "clearItemInUse", at = @At("HEAD"))
@@ -312,9 +450,7 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
 
         this.offhand$isOffhandItemInUse = false;
         EntityPlayer player = (EntityPlayer) (Object) this;
-        if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
-            OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, false);
-        }
+        OffhandCompatRegistry.syncOffhandUseState(player, false);
     }
 
     @Inject(method = "stopUsingItem()V", at = @At("HEAD"))
@@ -335,9 +471,7 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
             this.offhand$itemInUseCount = 0;
             if (this.offhand$isOffhandItemInUse) {
                 this.offhand$isOffhandItemInUse = false;
-                if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
-                    OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, false);
-                }
+                OffhandCompatRegistry.syncOffhandUseState(player, false);
             }
             return;
         }
@@ -350,9 +484,7 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
         this.offhand$itemInUseCount = 0;
         if (this.offhand$isOffhandItemInUse) {
             this.offhand$isOffhandItemInUse = false;
-            if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
-                OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, false);
-            }
+            OffhandCompatRegistry.syncOffhandUseState(player, false);
         }
     }
 
@@ -531,24 +663,6 @@ public abstract class MixinEntityPlayer implements IOffhandPlayer {
         }
 
         return current;
-    }
-
-    @Unique
-    private int offhand$getArmSwingAnimationEnd() {
-        EntityPlayer player = (EntityPlayer) (Object) this;
-        int duration = 6;
-
-        PotionEffect haste = player.getActivePotionEffect(Potion.digSpeed);
-        if (haste != null) {
-            duration = 6 - (haste.getAmplifier() + 1);
-        } else {
-            PotionEffect fatigue = player.getActivePotionEffect(Potion.digSlowdown);
-            if (fatigue != null) {
-                duration = 6 + (fatigue.getAmplifier() + 1) * 2;
-            }
-        }
-
-        return duration < 1 ? 1 : duration;
     }
 
     @Redirect(

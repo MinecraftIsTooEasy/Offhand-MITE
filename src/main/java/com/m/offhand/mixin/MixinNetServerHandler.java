@@ -8,7 +8,6 @@ import net.minecraft.EntityPlayer;
 import net.minecraft.InventoryPlayer;
 import net.minecraft.NetServerHandler;
 import net.minecraft.Packet16BlockItemSwitch;
-import net.minecraft.Packet81RightClick;
 import net.minecraft.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -58,12 +57,5 @@ public abstract class MixinNetServerHandler {
         }
     }
 
-    @Inject(method = "handleRightClick", at = @At("TAIL"))
-    private void offhand$handleRightClickPost(Packet81RightClick packet, CallbackInfo ci) {
-        int offhandSlot = ((IOffhandInventory) this.playerEntity.inventory).getOffhandSlot();
-        if (packet.slot_index == offhandSlot) {
-            ((IOffhandPlayer) (EntityPlayer) this.playerEntity).swingOffItem();
-        }
-    }
 }
 

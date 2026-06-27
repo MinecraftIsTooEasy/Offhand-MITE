@@ -12,8 +12,12 @@ base {
 
 repositories {
     maven {
+        name = "Spongepowered"
+        url = "https://repo.spongepowered.org/repository/maven-public/"
+    }
+    maven {
         name = "ModdedMITE"
-        url = ("https://maven.limingzxc.top/repository/maven-public/")
+        url = "https://maven.limingzxc.top/repository/maven-public/"
     }
 }
 
@@ -21,27 +25,24 @@ configurations {
     fml
 }
 
-def fishModLoaderDependency = "com.github.MinecraftIsTooEasy:FishModLoader:${project.fishmodloader_version}"
-def localFishModLoaderJar = file("lib/FishModLoader-v${project.fishmodloader_version}.jar")
-
 dependencies {
+
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    if (localFishModLoaderJar.exists()) {
-        fml files(localFishModLoaderJar)
-        implementation files(localFishModLoaderJar)
-    } else {
-        fml fishModLoaderDependency
-        implementation fishModLoaderDependency
-    }
-    implementation "com.github.MinecraftIsTooEasy:RustedIronCore:${project.rusted_iron_core_version}"
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("it.unimi.dsi:fastutil:8.5.12")
+    implementation("com.google.code.gson:gson:2.11.0")
+
+//    fml "com.github.MinecraftIsTooEasy:FishModLoader:3.4.2"
+//    implementation "com.github.MinecraftIsTooEasy:FishModLoader:3.4.2"
+    fml files('lib/FishModLoader-v3.4.3.jar')
+    implementation files('lib/FishModLoader-v3.4.3.jar')
+    implementation "com.github.MinecraftIsTooEasy:RustedIronCore:1.5.5"
+    implementation "com.github.MinecraftIsTooEasy:ManyLib:2.3.1"
 
     // other Mod
-    localRuntime "com.github.MinecraftIsTooEasy:ModernMITE:${project.modern_mite_version}"
-    localRuntime "com.github.MinecraftIsTooEasy:OMMC:${project.ommc_version}"
-//    localRuntime "com.github.MinecraftIsTooEasy:ManyLib:2.3.0"
+    localRuntime "com.github.MinecraftIsTooEasy:ModernMITE:3.7.4"
+//    localRuntime "com.github.MinecraftIsTooEasy:OMMC:1.4.2"
 }
 
 def fmlResolvedFile = configurations.fml.files.iterator().next()
@@ -49,16 +50,22 @@ def fmlResolvedFile = configurations.fml.files.iterator().next()
 loom {
     accessWidenerPath = file("src/main/resources/offhand.accesswidener")
     mergedMinecraftJar()
-
+    setFML(fmlResolvedFile)
+    dependencies.add("mappings", fmlMCPMappings())
     mods {
-        "${archives_base_name}" {
+        "offhand" {
             sourceSet sourceSets.main
         }
     }
+    runs {
+        client {
+            String name = project.username
+            String width = project.screen_width
+            String height = project.screen_height
+            programArgs "--userProperties", "{}", "--username", name, "--session", "a.a.a.a", "--width", width, "--height", height
+        }
+    }
 }
-
-loom.setFML(fmlResolvedFile)
-dependencies.add("mappings", loom.fmlMCPMappings())
 
 processResources {
     inputs.property "version", project.version
@@ -84,24 +91,14 @@ jar {
     inputs.property "archivesName", project.base.archivesName
 
     from("LICENSE") {
-        rename { "${it}_${inputs.properties.archivesName}" }
+        rename { "${it}_${inputs.properties.archivesName}"}
     }
 }
 
-tasks.named('runClient', JavaExec).configure { exec ->
-    def user = project.hasProperty('user_name')
-            ? project.user_name
-            : (project.hasProperty('username') ? project.username : 'Dev')
-    exec.setArgs(['--username', user, '--session', '0', '--width', '854', '--height', '480'])
-}
-
-// configure the maven publication
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            groupId = project.maven_group
             artifactId = project.archives_base_name
-            version = project.mod_version
             from components.java
         }
     }
@@ -111,7 +108,6 @@ publishing {
             name = "ModdedMITE"
             url = uri("https://maven.limingzxc.top/repository/maven-releases/")
             credentials {
-                // Read only from gradle.properties (user level, your gradle_home)
                 username = project.findProperty("nexusUsername")
                 password = project.findProperty("nexusPassword")
             }

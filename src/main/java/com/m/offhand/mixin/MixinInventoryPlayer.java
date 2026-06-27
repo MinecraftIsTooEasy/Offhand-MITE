@@ -1,6 +1,6 @@
 package com.m.offhand.mixin;
 
-import com.m.offhand.OffhandConfig;
+import com.m.offhand.OffhandManyLibConfig;
 import com.m.offhand.api.core.IOffhandInventory;
 import net.minecraft.EntityPlayer;
 import net.minecraft.InventoryPlayer;
@@ -148,7 +148,7 @@ public abstract class MixinInventoryPlayer implements IOffhandInventory {
 
     @Inject(method = "getFirstEmptyStack", at = @At("RETURN"), cancellable = true)
     private void offhand$excludeOffhandFromFirstEmptyStack(CallbackInfoReturnable<Integer> cir) {
-        if (OffhandConfig.offhandPickup) {
+        if (OffhandManyLibConfig.OFFHAND_PICKUP.getBooleanValue()) {
             return;
         }
 
@@ -161,7 +161,7 @@ public abstract class MixinInventoryPlayer implements IOffhandInventory {
 
     @Inject(method = "storeItemStack", at = @At("RETURN"), cancellable = true)
     private void offhand$excludeOffhandFromStoreItemStack(ItemStack stack, CallbackInfoReturnable<Integer> cir) {
-        if (OffhandConfig.offhandPickup) {
+        if (OffhandManyLibConfig.OFFHAND_PICKUP.getBooleanValue()) {
             return;
         }
 
@@ -174,7 +174,7 @@ public abstract class MixinInventoryPlayer implements IOffhandInventory {
 
     @Inject(method = "hasEmptyMainInventorySlot", at = @At("RETURN"), cancellable = true)
     private void offhand$excludeOffhandFromHasEmptyMainInventorySlot(CallbackInfoReturnable<Boolean> cir) {
-        if (OffhandConfig.offhandPickup || !cir.getReturnValue()) {
+        if (OffhandManyLibConfig.OFFHAND_PICKUP.getBooleanValue() || !cir.getReturnValue()) {
             return;
         }
 

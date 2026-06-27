@@ -21,11 +21,9 @@ public abstract class MixinModelBiped extends ModelBase {
     @Shadow
     public ModelRenderer bipedLeftArm;
 
-    @Inject(
-        method = "setRotationAngles",
-        at = @At(value = "FIELD", target = "Lnet/minecraft/ModelBiped;isSneak:Z", shift = At.Shift.BEFORE))
-    private void offhand$moveOffHandArm(float f1, float f2, float f3, float f4, float f5, float f6, Entity entity, CallbackInfo ci) {
-        OffhandRenderHelper.moveOffHandArm(entity, (ModelBiped) (Object) this, f6);
+    @Inject(method = "setRotationAngles", at = @At("TAIL"))
+    private void offhand$applyOffhandAttackSwing(float f1, float f2, float f3, float f4, float f5, float f6, Entity entity, CallbackInfo ci) {
+        OffhandRenderHelper.applyOffhandAttackSwing(entity, (ModelBiped) (Object) this, this.onGround);
     }
 
     @Inject(method = "setRotationAngles", at = @At("TAIL"))

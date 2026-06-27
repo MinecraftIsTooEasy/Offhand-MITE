@@ -1,5 +1,6 @@
 package com.m.offhand.mixin;
 
+import com.m.offhand.api.compat.OffhandCompatRegistry;
 import com.m.offhand.api.core.OffhandUtils;
 import com.m.offhand.client.OffhandRenderHelper;
 import net.minecraft.*;
@@ -26,6 +27,7 @@ public abstract class MixinGuiIngame extends Gui {
     @Inject(method = "renderGameOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/RenderHelper;disableStandardItemLighting()V", shift = At.Shift.BEFORE))
     private void offhand$renderOffhandSlot(float par1, boolean par2, int par3, int par4, CallbackInfo ci) {
         if (this.mc.thePlayer == null) return;
+        if (!OffhandCompatRegistry.getRenderPolicy().shouldRenderHotbarOffhand(this.mc.thePlayer)) return;
 
         ItemStack offhandStack = OffhandUtils.getOffhandItem(this.mc.thePlayer);
 
@@ -36,14 +38,15 @@ public abstract class MixinGuiIngame extends Gui {
         int slotX = width / 2 - 91 - 24;
         int slotY = height - 16 - 6;
 
-        if (offhandStack != null) {
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            
-            OffhandRenderHelper.drawOffhandSlotBackground(slotX, slotY);
-            
-            GL11.glDisable(GL11.GL_BLEND);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+        OffhandRenderHelper.drawOffhandSlotBackground(slotX, slotY);
+
+        GL11.glDisable(GL11.GL_BLEND);
+
+        if (offhandStack != null && offhandStack.stackSize > 0 && offhandStack.getItem() != null) {
             GL11.glEnable(GL12.GL_RESCALE_NORMAL);
             RenderHelper.enableGUIStandardItemLighting();
 

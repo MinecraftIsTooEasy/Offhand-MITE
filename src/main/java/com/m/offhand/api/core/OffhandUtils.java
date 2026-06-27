@@ -20,6 +20,8 @@ public final class OffhandUtils {
     private static final ThreadLocal<Boolean> CLIENT_OFFHAND_USE_CONTEXT = new ThreadLocal<Boolean>();
     private static final ThreadLocal<Boolean> CLIENT_OFFHAND_RENDER_CONTEXT = new ThreadLocal<Boolean>();
     private static int clientSuppressMainhandRenderUntilTick = -1;
+    private static int clientOffhandAttackAnimationUntilTick = -1;
+    private static int clientOffhandMiningAnimationUntilTick = -1;
 
     private OffhandUtils() {
     }
@@ -210,5 +212,35 @@ public final class OffhandUtils {
             return false;
         }
         return player.ticksExisted <= clientSuppressMainhandRenderUntilTick;
+    }
+
+    public static void markClientOffhandAttackAnimation(EntityPlayer player, int ticks) {
+        if (player == null || player.worldObj == null || !player.worldObj.isRemote) {
+            return;
+        }
+        int safeTicks = ticks < 0 ? 0 : ticks;
+        clientOffhandAttackAnimationUntilTick = player.ticksExisted + safeTicks;
+    }
+
+    public static boolean shouldAnimateClientOffhandAttack(EntityPlayer player) {
+        if (player == null || player.worldObj == null || !player.worldObj.isRemote) {
+            return false;
+        }
+        return player.ticksExisted <= clientOffhandAttackAnimationUntilTick;
+    }
+
+    public static void markClientOffhandMiningAnimation(EntityPlayer player, int ticks) {
+        if (player == null || player.worldObj == null || !player.worldObj.isRemote) {
+            return;
+        }
+        int safeTicks = ticks < 0 ? 0 : ticks;
+        clientOffhandMiningAnimationUntilTick = player.ticksExisted + safeTicks;
+    }
+
+    public static boolean shouldAnimateClientOffhandMining(EntityPlayer player) {
+        if (player == null || player.worldObj == null || !player.worldObj.isRemote) {
+            return false;
+        }
+        return player.ticksExisted <= clientOffhandMiningAnimationUntilTick;
     }
 }

@@ -7,7 +7,6 @@ import com.m.offhand.api.core.OffhandUtils;
 import net.minecraft.EntityLivingBase;
 import net.minecraft.EntityPlayer;
 import net.minecraft.ItemStack;
-import net.minecraft.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -48,6 +47,10 @@ public class MixinEntityLivingBase {
         }
 
         EntityPlayer player = (EntityPlayer) self;
+        if (player.worldObj == null || player.worldObj.isRemote) {
+            return;
+        }
+
         ItemStack current = OffhandUtils.getOffhandItem(player);
         boolean changed = !ItemStack.areItemStacksEqual(this.offhand$previousOffhandStack, current);
         if (!changed) {
@@ -55,9 +58,7 @@ public class MixinEntityLivingBase {
         }
 
         this.offhand$previousOffhandStack = current == null ? null : current.copy();
-        if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
-            OffhandCompatRegistry.getSyncStrategy().syncOffhandItem(player);
-        }
+        OffhandCompatRegistry.syncOffhandItem(player);
     }
 
     @Inject(method = "clearActivePotions", at = @At("TAIL"))
@@ -80,8 +81,6 @@ public class MixinEntityLivingBase {
         }
 
         offhandPlayer.setOffhandItemInUse(false);
-        if (!player.worldObj.isRemote && player instanceof ServerPlayer) {
-            OffhandCompatRegistry.getSyncStrategy().syncOffhandUseState(player, false);
-        }
+        OffhandCompatRegistry.syncOffhandUseState(player, false);
     }
 }

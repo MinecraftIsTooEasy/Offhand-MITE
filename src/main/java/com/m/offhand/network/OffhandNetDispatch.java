@@ -30,6 +30,14 @@ public final class OffhandNetDispatch {
     }
 
     @Environment(EnvType.SERVER)
+    public static void sendToTrackingAndSelf(Entity target, Packet packet) {
+        sendToTracking(target, packet);
+        if (target instanceof ServerPlayer serverPlayer) {
+            sendToPlayer(serverPlayer, packet);
+        }
+    }
+
+    @Environment(EnvType.SERVER)
     public static void sendToAssociated(Entity target, Packet packet) {
         if (target == null || packet == null || !(target.worldObj instanceof WorldServer world)) {
             return;
