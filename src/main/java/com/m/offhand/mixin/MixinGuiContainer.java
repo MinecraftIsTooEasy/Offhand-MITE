@@ -38,7 +38,7 @@ public abstract class MixinGuiContainer {
             return;
         }
 
-        if (keyCode != OffhandKeyHandler.SWAP_KEY.keyCode) {
+        if (!OffhandKeyHandler.SWAP_KEY.matches(keyCode)) {
             return;
         }
 

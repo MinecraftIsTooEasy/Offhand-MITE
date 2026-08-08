@@ -29,7 +29,7 @@ public class Offhand implements ModInitializer {
 
         if (!FabricUtil.isServer()) {
             OffhandKeyHandler keyHandler = new OffhandKeyHandler();
-            Handlers.Keybinding.register(keyHandler);
+            Handlers.Keybinding.register(OffhandKeyHandler::registerKeybindings);
             Handlers.Tick.register(keyHandler);
         }
 

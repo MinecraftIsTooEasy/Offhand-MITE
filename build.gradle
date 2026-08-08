@@ -47,11 +47,9 @@ dependencies {
     implementation("it.unimi.dsi:fastutil:8.5.12")
     implementation("com.google.code.gson:gson:2.11.0")
 
-//    fml "com.github.MinecraftIsTooEasy:FishModLoader:3.4.2"
-//    implementation "com.github.MinecraftIsTooEasy:FishModLoader:3.4.2"
-    fml files('lib/FishModLoader-v3.4.3.jar')
-    implementation files('lib/FishModLoader-v3.4.3.jar')
-    implementation "com.github.MinecraftIsTooEasy:RustedIronCore:1.5.5"
+    fml "com.github.MinecraftIsTooEasy:FishModLoader:3.4.3"
+    implementation "com.github.MinecraftIsTooEasy:FishModLoader:3.4.3"
+    implementation "com.github.MinecraftIsTooEasy:RustedIronCore:1.5.7"
     implementation "com.github.MinecraftIsTooEasy:ManyLib:2.3.1"
 
     // other Mod

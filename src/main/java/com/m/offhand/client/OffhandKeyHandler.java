@@ -3,26 +3,24 @@ package com.m.offhand.client;
 import com.m.offhand.api.compat.OffhandCompatRegistry;
 import com.m.offhand.api.core.OffhandUtils;
 import com.m.offhand.network.OffhandSwapRequestPacket;
-import moddedmite.rustedironcore.api.event.listener.IKeybindingListener;
+import moddedmite.rustedironcore.api.event.events.KeybindingRegisterEvent;
 import moddedmite.rustedironcore.api.event.listener.ITickListener;
+import moddedmite.rustedironcore.api.keybinding.KeybindingV1;
 import moddedmite.rustedironcore.network.Network;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.*;
+import net.minecraft.Minecraft;
 import org.lwjgl.input.Keyboard;
 
-import java.util.function.Consumer;
-
 @Environment(EnvType.CLIENT)
-public class OffhandKeyHandler implements IKeybindingListener, ITickListener {
+public class OffhandKeyHandler implements ITickListener {
 
-    public static final KeyBinding SWAP_KEY = new KeyBinding("key.offhand.swap", Keyboard.KEY_F);
+    public static final KeybindingV1 SWAP_KEY = new KeybindingV1("key.offhand.swap", Keyboard.KEY_F, KeybindingV1.Category.INVENTORY);
 
     private boolean swapKeyDownLastTick = false;
 
-    @Override
-    public void onKeybindingRegister(Consumer<KeyBinding> registry) {
-        registry.accept(SWAP_KEY);
+    public static void registerKeybindings(KeybindingRegisterEvent event) {
+        event.register(SWAP_KEY);
     }
 
     @Override
@@ -32,7 +30,7 @@ public class OffhandKeyHandler implements IKeybindingListener, ITickListener {
             return;
         }
 
-        boolean isSwapKeyDown = Keyboard.isKeyDown(SWAP_KEY.keyCode);
+        boolean isSwapKeyDown = Keyboard.isKeyDown(SWAP_KEY.getKey());
         if (client.currentScreen != null || client.imposed_gui_chat != null) {
             // Inventory GUI swaps are handled by GuiContainer.
             // Imposed chat can be active while currentScreen is still null, so block swap there too.
