@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "offhand",
+  "id": "${id}",
   "version": "${version}",
   "depends": {
     "fishmodloader": ">=3.4.0",
@@ -10,7 +10,7 @@
     "many-lib": "*"
   },
   "environment": "*",
-  "name": "Offhand-MITE",
+  "name": "${name}",
   "description": "",
   "authors": [
     "LouisXIV",
