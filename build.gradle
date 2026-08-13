@@ -7,6 +7,8 @@ version = project.mod_version
 group = project.maven_group
 
 def useLocalizedArchiveName = Locale.default.country.equalsIgnoreCase("CN")
+def clientMinHeap = providers.gradleProperty("client_min_heap").getOrElse("256M")   // Spark set
+def clientMaxHeap = providers.gradleProperty("client_max_heap").getOrElse("2G")     // Spark set
 
 base {
     // Prefix local JAR names with an optional alias, for example: "[Alias]" + archives_base_name.
@@ -17,11 +19,6 @@ base {
 }
 
 repositories {
-    // Add repositories to retrieve artifacts from in here.
-    // Only declare repositories required by this project because Loom provides
-    // the repositories needed for Minecraft and its libraries automatically.
-    // See https://docs.gradle.org/current/userguide/declaring_repositories.html
-    // for more information about repository declarations.
     maven {
         name = "Spongepowered"
         url = "https://repo.spongepowered.org/repository/maven-public/"
@@ -54,7 +51,16 @@ dependencies {
 
     // other Mod
     localRuntime "com.github.MinecraftIsTooEasy:ModernMITE:3.7.4"
-//    localRuntime "com.github.MinecraftIsTooEasy:OMMC:1.4.2"
+    localRuntime "com.github.MinecraftIsTooEasy:Waila:2.0.6"
+    localRuntime "com.github.MinecraftIsTooEasy:BetterGameSetting:1.4.0.1"
+    localRuntime "com.github.MinecraftIsTooEasy:OhMyCommands:3.0.0-mc1.6.4-MITE-20260629"
+    localRuntime "com.github.MinecraftIsTooEasy:BetterTips:1.5.1"
+    localRuntime files('libs/SelectionBox-1.1.1.jar')
+    localRuntime files('libs/spark-mite-1.10.0.jar')
+//    localRuntime files('libs/MiTE-Renewed.0.2.8.1.jar')
+//    localRuntime "com.github.MinecraftIsTooEasy:BreadSkin:1.6.0.jar"
+//    localRuntime "com.github.MinecraftIsTooEasy:BetterGrassAndLeaves:1.0.1"
+//    localRuntime files('libs/26.2.jar')
 }
 
 def fmlResolvedFile = configurations.fml.singleFile
@@ -67,9 +73,6 @@ loom {
     mods {
         "offhand" {
             sourceSet sourceSets.main
-//            sourceSet sourceSets.client
-//            sourceSet sourceSets.server
-//            For modules in the 'src' directory, only the main source set is required by default.
         }
     }
     runs {
@@ -77,11 +80,9 @@ loom {
             String name = project.username
             String width = project.screen_width
             String height = project.screen_height
+            vmArgs "-Xms${clientMinHeap}", "-Xmx${clientMaxHeap}"   // Spark set
             programArgs "--userProperties", "{}", "--username", name, "--session", "a.a.a.a", "--width", width, "--height", height
         }
-//        server {
-//            programArgs "--", ""
-//        }
     }
 }
 
@@ -103,8 +104,6 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 java {
-    // Loom automatically attaches sourcesJar to remapSourcesJar and the build lifecycle when it is present.
-    // Remove this line only when source artifacts should not be generated.
     withSourcesJar()
 
     sourceCompatibility = JavaVersion.VERSION_17
@@ -119,7 +118,6 @@ jar {
     }
 }
 
-// Configure the Maven publication.
 publishing {
     publications {
         create("mavenJava", MavenPublication) {
@@ -129,8 +127,6 @@ publishing {
     }
 
     repositories {
-        // Publication repositories are separate from dependency repositories declared above.
-        // Add or remove release targets here without changing dependency resolution.
         maven {
             name = "ModdedMITE"
             url = uri("https://maven.limingzxc.top/repository/maven-releases/")

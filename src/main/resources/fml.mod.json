@@ -3,11 +3,11 @@
   "id": "${id}",
   "version": "${version}",
   "depends": {
-    "fishmodloader": ">=3.4.0",
+    "fishmodloader": ">=3.4.2",
     "minecraft": "1.6.4-mite",
     "java": ">=17",
     "rusted_iron_core": ">=1.5.7",
-    "many-lib": "*"
+    "many-lib": ">=2.3.1"
   },
   "environment": "*",
   "name": "${name}",
@@ -18,7 +18,7 @@
   ],
   "entrypoints": {
     "main": [
-      "com.m.offhand.Offhand"
+      "moddedMite.offhand.Offhand"
     ]
   },
   "mixins": [
