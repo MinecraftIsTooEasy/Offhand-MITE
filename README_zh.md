@@ -4,8 +4,6 @@
 
 ## 中文
 
-**当前版本：3.0.9**
-
 Offhand-MITE 为 Minecraft 1.6.4-MITE / FishModLoader 3.x 添加了一个真正可用的副手槽，以及围绕副手使用、渲染、同步和兼容 API 的完整流程。
 
 ### 功能

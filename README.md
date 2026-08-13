@@ -4,8 +4,6 @@ English | [简体中文](README_zh.md)
 
 ## English
 
-**Current version: 3.0.9**
-
 Offhand-MITE adds a dedicated offhand slot and offhand interaction flow to Minecraft 1.6.4-MITE on FishModLoader 3.x.
 
 ### Features
